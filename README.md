@@ -18,21 +18,20 @@ This repository contains a set of scripts to parse PDF documents and convert the
   - [Detailed Process Flow for Enhanced Parser](#detailed-process-flow-for-enhanced-parser)
   - [Component Data Flow](#component-data-flow)
 - [Features](#features)
-- [Advanced Features](#advanced-features)
-  - [Robust Logging System](#robust-logging-system)
-- [Module Usage Examples](#module-usage-examples)
-  - [Using the Complete Pipeline](#using-the-complete-pipeline)
-  - [Multiple Files](#multiple-files)
-  - [Optional Processing Parameters](#optional-processing-parameters)
-- [Scripts and Output Files](#scripts-and-output-files)
+- [Getting Started](#getting-started)
+  - [Environment Setup](#environment-setup)
+  - [Basic Usage](#basic-usage)
+- [Usage Examples](#usage-examples)
+  - [Processing Multiple Files](#processing-multiple-files)
+  - [Processing Options](#processing-options)
+  - [Table Extraction](#table-extraction)
+  - [Text Extraction](#text-extraction)
+  - [Markdown Generation](#markdown-generation)
 - [Managing Output Files](#managing-output-files)
   - [Cleaning Output Files](#cleaning-output-files)
   - [Deleting Output Files](#deleting-output-files)
-- [Usage](#usage)
-  - [Table Extraction](#table-extraction)
-  - [Full Text Extraction](#full-text-extraction)
-  - [Structured Markdown Generation](#structured-markdown-generation)
-- [Environment Setup](#environment-setup)
+- [Advanced Features](#advanced-features)
+  - [Robust Logging System](#robust-logging-system)
 - [Customization](#customization)
 - [Performance Considerations](#performance-considerations)
 
@@ -206,46 +205,71 @@ flowchart LR
 - **Processing Pipeline**: Run the entire process with a single command
 - **Robust Logging**: Comprehensive logging system with configurable log levels and file output
 
-## Advanced Features
+## Getting Started
 
-### Robust Logging System
+### Environment Setup
 
-The project includes a comprehensive logging system that provides:
-
-1. **Console Output**: Color-coded log messages displayed in the terminal
-2. **File Logging**: Detailed logs saved to timestamped files in the `logs/` directory
-3. **Configurable Log Levels**: Set logging verbosity (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-4. **Different Log Formats**: Console logs are concise and color-coded, while file logs include timestamps and module info
-
-Use the logging features by adding the `--log-level` argument:
+It's recommended to use a conda environment:
 
 ```bash
-# Run with detailed debugging information
-python pdf_processing_pipeline.py --log-level=DEBUG
+# Create a new conda environment with Python 3.11
+conda create -n pdf_parser python=3.11
+conda activate pdf_parser
 
-# Run with minimal logging (only warnings and errors)
-python pdf_processing_pipeline.py --log-level=WARNING
+# Install dependencies using requirements.txt
+pip install -r requirements.txt
+
+# Or install packages individually
+pip install pypdf==3.17.4 camelot-py==1.0.0 pandas==2.2.3 opencv-python-headless tabulate pdfminer-six
 ```
 
-Log files can be found in the `logs/` directory with timestamps for easy identification.
+On macOS, you may need to install ghostscript (required by camelot-py):
+```bash
+# Using Homebrew
+brew install ghostscript
 
-## Module Usage Examples
+# Using MacPorts
+port install ghostscript
+```
 
-### Using the Complete Pipeline
+On Linux:
+```bash
+# Debian/Ubuntu
+sudo apt-get install ghostscript
 
-Process all PDF files in the `data/sourcedocs` directory with the default settings:
+# Fedora/RHEL
+sudo dnf install ghostscript
+```
+
+On Windows:
+```bash
+# Using Chocolatey
+choco install ghostscript
+```
+
+### Basic Usage
+
+The PDF processor is designed to be simple to use. The most common usage is:
 
 ```bash
+# Process a single PDF file
+python -m pdf_processor path/to/your/file.pdf
+
+# Process all PDF files in the data/sourcedocs directory
 python -m pdf_processor
 ```
 
-To process specific PDF files:
+This will:
+1. Extract text from each page
+2. Extract tables from the document
+3. Clean and sanitize the extracted content
+4. Generate structured markdown output
 
-```bash
-python -m pdf_processor path/to/your/file.pdf
-```
+All output files will be created in the appropriate subdirectories under `data/outputs/`.
 
-### Multiple Files
+## Usage Examples
+
+### Processing Multiple Files
 
 Process multiple PDF files at once:
 
@@ -253,26 +277,57 @@ Process multiple PDF files at once:
 python -m pdf_processor file1.pdf file2.pdf file3.pdf
 ```
 
-### Optional Processing Parameters
+### Processing Options
+
+The processor supports various options:
 
 ```bash
 python -m pdf_processor [OPTIONS] [pdf_paths ...]
 
 Options:
   --log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
-                        Set logging level (default: INFO)
+                        Set the logging level (default: INFO)
 ```
 
-## Scripts and Output Files
+Run with detailed debugging information:
+```bash
+python -m pdf_processor --log-level=DEBUG path/to/your/file.pdf
+```
 
-| Module | Purpose | Output Files | Location |
-|--------|---------|--------------|----------|
-| **pdf_processor.extractors.table_extractor** | Extracts tables from PDF using camelot-py | Table markdown files | `outputs/tables/{pdf_name}_table_*.md` |
-| **pdf_processor.extractors.text_extractor** | Extracts text from PDF pages | Text files for each page | `outputs/text/{pdf_name}_page_*.txt` |
-| **pdf_processor.converters.enhanced_markdown** | Creates structured and enhanced markdown | Structured and enhanced markdown | `outputs/markdown/{pdf_name}_structured.md` & `outputs/markdown/{pdf_name}_enhanced.md` |
-| **pdf_processor.pipeline** | Orchestrates the entire PDF processing pipeline | All output files | `outputs/` |
-| **pdf_processor.utils.cleaning** | Sanitizes and improves extracted PDF content | Cleaned files | All output directories |
-| **delete_outputs.py** | Deletes generated files to start fresh | None | N/A |
+Run with minimal logging (only warnings and errors):
+```bash
+python -m pdf_processor --log-level=WARNING path/to/your/file.pdf
+```
+
+### Table Extraction
+
+Tables are automatically extracted as part of the main pipeline:
+
+```bash
+python -m pdf_processor path/to/your/file.pdf
+```
+
+This will create markdown files for tables found in the PDF in the `data/outputs/tables` directory.
+
+### Text Extraction
+
+Text extraction is handled by the main processing pipeline:
+
+```bash
+python -m pdf_processor path/to/your/file.pdf
+```
+
+This will create text files for each page of the PDF in the `data/outputs/text` directory.
+
+### Markdown Generation
+
+To generate structured markdown files from the PDF:
+
+```bash
+python -m pdf_processor path/to/your/file.pdf
+```
+
+This will create both `data/outputs/markdown/{pdf_name}_structured.md` and `data/outputs/markdown/{pdf_name}_enhanced.md` files with proper section recognition and field extraction.
 
 ## Managing Output Files
 
@@ -327,77 +382,28 @@ The delete script will:
 4. Support custom output directories
 5. Show the directory structure after deletion is complete
 
-## Usage
+## Advanced Features
 
-### 1. Table Extraction
+### Robust Logging System
 
-To extract tables from a PDF (as part of the pipeline):
+The project includes a comprehensive logging system that provides:
 
-```bash
-python -m pdf_processor path/to/your/file.pdf
-```
+1. **Console Output**: Color-coded log messages displayed in the terminal
+2. **File Logging**: Detailed logs saved to timestamped files in the `logs/` directory
+3. **Configurable Log Levels**: Set logging verbosity (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+4. **Different Log Formats**: Console logs are concise and color-coded, while file logs include timestamps and module info
 
-This will create markdown files for tables found in the PDF in the `outputs/tables` directory.
-
-### 2. Full Text Extraction
-
-All text extraction is handled by the main processing pipeline:
+Use the logging features by adding the `--log-level` argument:
 
 ```bash
-python -m pdf_processor path/to/your/file.pdf
+# Run with detailed debugging information
+python -m pdf_processor --log-level=DEBUG
+
+# Run with minimal logging (only warnings and errors)
+python -m pdf_processor --log-level=WARNING
 ```
 
-This will create text files for each page of the PDF in the `outputs/text` directory.
-
-### 3. Structured Markdown Generation
-
-To generate structured markdown files from the PDF:
-
-```bash
-python -m pdf_processor path/to/your/file.pdf
-```
-
-This will create both `outputs/markdown/{pdf_name}_structured.md` and `outputs/markdown/{pdf_name}_enhanced.md` files with proper section recognition and field extraction.
-
-## Environment Setup
-
-It's recommended to use a conda environment:
-
-```bash
-# Create a new conda environment with Python 3.11
-conda create -n pdf_parser python=3.11
-conda activate pdf_parser
-
-# Install dependencies using requirements.txt
-pip install -r requirements.txt
-
-# Or install packages individually
-pip install pypdf==3.17.4 camelot-py==1.0.0 pandas==2.2.3 opencv-python-headless tabulate pdfminer-six
-```
-
-On macOS, you may need to install ghostscript (required by camelot-py):
-```bash
-# Using Homebrew
-brew install ghostscript
-
-# Using MacPorts
-port install ghostscript
-```
-
-On Linux:
-```bash
-# Debian/Ubuntu
-sudo apt-get install ghostscript
-
-# Fedora/RHEL
-sudo dnf install ghostscript
-```
-
-On Windows:
-```bash
-# Using Chocolatey
-choco install ghostscript
-```
+Log files can be found in the `logs/` directory with timestamps for easy identification.
 
 ## Customization
 
