@@ -75,9 +75,9 @@ These scripts are designed to extract text and tables from PDF documents, clean 
 
 ```mermaid
 graph TD
-    PDF[PDF Document] --> PipelineModule[pdf_processor.pipelineProcess PDF]
-    PipelineModule --> TextExtractor[pdf_processor.extractors.text_extractor\nPyPDF]
-    PipelineModule --> TableExtractor[pdf_processor.extractors.table_extractor\nCamelot-py]
+    PDF[PDF Document] --> PipelineModule["pdf_processor.pipeline<br>Process PDF"]
+    PipelineModule --> TextExtractor["pdf_processor.extractors.text_extractor<br>PyPDF"]
+    PipelineModule --> TableExtractor["pdf_processor.extractors.table_extractor<br>Camelot-py"]
     TextExtractor --> ExtractedText["Page Text Files (.txt)"]
     TableExtractor --> TablesMarkdown["Table Markdown Files (.md)"]
     ExtractedText --> CleaningModule[pdf_processor.utils.cleaning]
@@ -155,24 +155,24 @@ flowchart LR
 flowchart LR
     subgraph Input["Input (PDF Source)"]
         style Input fill:#ffcc80,stroke:#ff9800,stroke-width:2px
-        PDF[PDF Document]
+        PDF[<font color="black">PDF Document</font>]
         style PDF fill:#ffcc80,stroke:#ff9800,stroke-width:2px
     end
     
     subgraph Extraction["Extraction Tools"]
         style Extraction fill:#90caf9,stroke:#1976d2,stroke-width:2px
-        CamelotPy[Camelot-py\nTable Extraction]
-        PyPDF[PyPDF\nText Extraction]
+        CamelotPy[<font color="black">Camelot-py<br>Table Extraction</font>]
+        PyPDF[<font color="black">PyPDF<br>Text Extraction</font>]
         style CamelotPy fill:#90caf9,stroke:#1976d2,stroke-width:2px
         style PyPDF fill:#90caf9,stroke:#1976d2,stroke-width:2px
     end
     
     subgraph Processing["Processing Components"]
         style Processing fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
-        Cleaning[Text Cleaning]
-        SectionDetection[Section Detection]
-        SubsectionDetection[Subsection Detection]
-        FieldExtraction[Field Extraction]
+        Cleaning[<font color="black">Text Cleaning</font>]
+        SectionDetection[<font color="black">Section Detection</font>]
+        SubsectionDetection[<font color="black">Subsection Detection</font>]
+        FieldExtraction[<font color="black">Field Extraction</font>]
         style Cleaning fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
         style SectionDetection fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
         style SubsectionDetection fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
@@ -181,10 +181,10 @@ flowchart LR
     
     subgraph Output["Output Files"]
         style Output fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
-        TablesMD[Table Markdown]
-        PageText[Page Text Files]
-        StructuredMD[Structured Markdown]
-        ImprovedMD[Improved Markdown]
+        TablesMD[<font color="black">Table Markdown</font>]
+        PageText[<font color="black">Page Text Files</font>]
+        StructuredMD[<font color="black">Structured Markdown</font>]
+        ImprovedMD[<font color="black">Improved Markdown</font>]
         style TablesMD fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
         style PageText fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
         style StructuredMD fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
