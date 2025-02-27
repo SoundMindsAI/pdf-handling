@@ -173,37 +173,45 @@ flowchart TD
 
 ```mermaid
 graph TD
-    subgraph "Table Extraction (pdf_table_extractor.py)"
-        B1[Extract Tables] --> B2[Convert to Markdown]
-        B2 --> B3[Save Table Files]
+    subgraph "Pipeline Orchestration (pdf_processor.pipeline)"
+        P1[Process PDF] --> P2[Ensure Output Directories]
+        P2 --> P3[Extract Text and Tables]
+        P3 --> P4[Apply Cleaning]
+        P4 --> P5[Convert to Enhanced Markdown]
     end
     
-    subgraph "Text Extraction (pdf_text_extractor.py)"
+    subgraph "Text Extraction (pdf_processor.extractors.text_extractor)"
         T1[Extract Text] --> T2[Clean Text]
         T2 --> T3[Save Page Files]
     end
     
-    subgraph "Basic Markdown (pdf_to_basic_markdown.py)"
-        M1[Load Text] --> M2[Split into Sections]
-        M2 --> M3[Identify Subsections]
-        M3 --> M4[Format as Markdown]
-        M4 --> M5[Save Markdown File]
+    subgraph "Table Extraction (pdf_processor.extractors.table_extractor)"
+        B1[Extract Tables] --> B2[Convert to Markdown]
+        B2 --> B3[Save Table Files]
     end
     
-    subgraph "Enhanced Markdown (pdf_to_enhanced_markdown.py)"
+    subgraph "Text Cleaning (pdf_processor.utils.cleaning)"
+        C1[Basic Cleaning] --> C2[Deep Cleaning]
+        C2 --> C3[Ultra-Deep Cleaning]
+        C3 --> C4[Enhanced Text Fixing]
+    end
+    
+    subgraph "Enhanced Markdown (pdf_processor.converters.enhanced_markdown)"
         I1[Extract All Text] --> I2[Clean and Process]
         I2 --> I3[Advanced Section Detection]
         I3 --> I4[Pattern-based Field Extraction]
         I4 --> I5[Generate Enhanced Markdown]
     end
     
-    classDef table fill:#ffcccc,stroke:#333,stroke-width:1px;
+    classDef pipeline fill:#ffcccc,stroke:#333,stroke-width:1px;
     classDef text fill:#ccffcc,stroke:#333,stroke-width:1px;
-    classDef basic fill:#ccccff,stroke:#333,stroke-width:1px;
-    classDef enhanced fill:#ffffcc,stroke:#333,stroke-width:1px;
+    classDef table fill:#ccccff,stroke:#333,stroke-width:1px;
+    classDef cleaning fill:#ffffcc,stroke:#333,stroke-width:1px;
+    classDef enhanced fill:#ffccff,stroke:#333,stroke-width:1px;
     
-    class B1,B2,B3 table;
+    class P1,P2,P3,P4,P5 pipeline;
     class T1,T2,T3 text;
-    class M1,M2,M3,M4,M5 basic;
+    class B1,B2,B3 table;
+    class C1,C2,C3,C4 cleaning;
     class I1,I2,I3,I4,I5 enhanced;
 ```

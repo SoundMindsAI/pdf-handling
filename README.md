@@ -39,39 +39,63 @@ These scripts are designed to extract text and tables from PDF documents, clean 
 
 ```mermaid
 graph TD
-    PDF[PDF Document] --> TableExtractor[pdf_table_extractor.py\nCamelot-py]
-    PDF --> TextExtractor[pdf_text_extractor.py\nPyPDF]
-    TableExtractor --> TablesMarkdown[{pdf_name}_table_*.md]
+    PDF[PDF Document] --> PipelineModule[pdf_processor.pipeline\nProcess PDF]
+    PipelineModule --> TextExtractor[pdf_processor.extractors.text_extractor\nPyPDF]
+    PipelineModule --> TableExtractor[pdf_processor.extractors.table_extractor\nCamelot-py]
     TextExtractor --> ExtractedText[{pdf_name}_page_*.txt]
-    TablesMarkdown --> BasicMarkdown[pdf_to_basic_markdown.py]
-    ExtractedText --> BasicMarkdown
-    BasicMarkdown --> StructuredMD[{pdf_name}_structured.md]
-    PDF --> EnhancedMarkdown[pdf_to_enhanced_markdown.py]
-    EnhancedMarkdown --> ImprovedMD[{pdf_name}_improved.md]
+    TableExtractor --> TablesMarkdown[{pdf_name}_table_*.md]
+    ExtractedText --> CleaningModule[pdf_processor.utils.cleaning]
+    TablesMarkdown --> CleaningModule
+    CleaningModule --> EnhancedMarkdown[pdf_processor.converters.enhanced_markdown]
+    EnhancedMarkdown --> StructuredMD[{pdf_name}_structured.md]
+    EnhancedMarkdown --> ImprovedMD[{pdf_name}_enhanced.md]
     
     classDef input fill:#f9f,stroke:#333,stroke-width:2px;
     classDef process fill:#bbf,stroke:#333,stroke-width:2px;
     classDef output fill:#bfb,stroke:#333,stroke-width:2px;
     
     class PDF input;
-    class TableExtractor,TextExtractor,BasicMarkdown,EnhancedMarkdown process;
+    class PipelineModule,TextExtractor,TableExtractor,CleaningModule,EnhancedMarkdown process;
     class TablesMarkdown,ExtractedText,StructuredMD,ImprovedMD output;
 ```
 
 ### Detailed Process Flow for Enhanced Parser
 
 ```mermaid
-flowchart TD
-    Start[Start] --> OpenPDF[Open PDF Document]
-    OpenPDF --> ExtractText[Extract Text from All Pages]
-    ExtractText --> CleanText[Clean Extracted Text\nRemove cid patterns, fix encoding]
-    CleanText --> SplitSections[Split Text into Sections\nBased on Known Section Titles]
-    SplitSections --> ProcessSections[Process Each Section]
-    ProcessSections --> FindSubsections[Find Subsections\nUsing Predefined Patterns]
-    FindSubsections --> ExtractFields[Extract Fields\nUsing Regex Patterns]
-    ExtractFields --> FormatMarkdown[Format as Markdown\nWith Headers and Bullet Points]
-    FormatMarkdown --> SaveOutput[Save to Markdown File]
-    SaveOutput --> End[End]
+flowchart LR
+    subgraph Input
+        PDF[PDF Document]
+    end
+    
+    subgraph Extraction
+        TextExtractor[Text Extractor Module]
+        TableExtractor[Table Extractor Module]
+    end
+    
+    subgraph Processing
+        Cleaning[Text Cleaning Module]
+        SectionDetection[Section Detection]
+        SubsectionDetection[Subsection Detection]
+        FieldExtraction[Field Extraction]
+    end
+    
+    subgraph Output
+        TablesMD[Table Markdown]
+        PageText[Page Text Files]
+        StructuredMD[Structured Markdown]
+        EnhancedMD[Enhanced Markdown]
+    end
+    
+    PDF --> TextExtractor
+    PDF --> TableExtractor
+    TableExtractor --> TablesMD
+    TextExtractor --> PageText
+    TextExtractor --> Cleaning
+    Cleaning --> SectionDetection
+    SectionDetection --> SubsectionDetection
+    SubsectionDetection --> FieldExtraction
+    FieldExtraction --> StructuredMD
+    FieldExtraction --> EnhancedMD
 ```
 
 ### Component Data Flow
