@@ -231,17 +231,11 @@ The sanitization tools now specifically address:
 To apply these fixes to existing PDF extracts:
 
 ```bash
-# Apply basic cleaning
-python clean_pdf_extracts.py --level=basic
+# Process a PDF with default cleaning (includes all levels of cleaning)
+python -m pdf_processor path/to/your/file.pdf
 
-# Apply deep cleaning
-python clean_pdf_extracts.py --level=deep
-
-# Apply ultra-deep cleaning
-python clean_pdf_extracts.py --level=ultra
-
-# Apply custom fixes to specific documents
-python final_cleanup.py
+# The cleaning is now automatically applied as part of the pipeline
+# There are no separate scripts or options to set cleaning levels
 ```
 
 ## Sanitization Process
@@ -283,24 +277,14 @@ python -m pdf_processor ./path/to/your/pdf.pdf --sanitize-level=basic
 The sanitization script can be run to fix encoding issues and improve formatting in the output files:
 
 ```bash
-# Clean all output types with deep cleaning (default)
-python clean_pdf_extracts.py
+# Cleaning is now integrated into the main pipeline and applied automatically
+# There is no need to run separate cleaning scripts
 
-# Specify a cleaning level (basic, deep, or ultra)
-python clean_pdf_extracts.py --level=basic
-python clean_pdf_extracts.py --level=deep
-python clean_pdf_extracts.py --level=ultra
+# Process your PDFs to get cleaned output
+python -m pdf_processor path/to/your/file.pdf
 
-# Clean specific output types
-python clean_pdf_extracts.py --text
-python clean_pdf_extracts.py --markdown
-python clean_pdf_extracts.py --tables
-
-# Combine options
-python clean_pdf_extracts.py --level=ultra --text --markdown
-
-# Specify a custom output directory
-python clean_pdf_extracts.py --output-dir=./custom_outputs
+# Process all PDFs in the data/sourcedocs directory
+python -m pdf_processor
 ```
 
 ### Sanitization Levels
@@ -352,19 +336,17 @@ The project includes two specialized scripts for managing output files:
 
 ### 1. Cleaning Output Files
 
-The `sanitize_pdf_extracts.py` script is used to clean and improve the quality of generated files **without deleting them**. It fixes encoding issues, improves formatting, and makes the output more readable.
+The sanitization script can be run to fix encoding issues and improve formatting in the output files:
 
 ```bash
-# Clean all content types
-python sanitize_pdf_extracts.py
+# Cleaning is now integrated into the main pipeline and applied automatically
+# There is no need to run separate cleaning scripts
 
-# Clean only specific output types
-python sanitize_pdf_extracts.py --tables    # Clean only table files
-python sanitize_pdf_extracts.py --text      # Clean only text files 
-python sanitize_pdf_extracts.py --markdown  # Clean only markdown files
+# Process your PDFs to get cleaned output
+python -m pdf_processor path/to/your/file.pdf
 
-# Specify a custom output directory
-python sanitize_pdf_extracts.py --output-dir=./custom_outputs
+# Process all PDFs in the data/sourcedocs directory
+python -m pdf_processor
 ```
 
 ### 2. Deleting Output Files
