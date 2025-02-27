@@ -25,13 +25,13 @@ These scripts are designed to extract text and tables from PDF documents, clean 
 ### Helper Scripts
 
 - **delete_outputs.py**: Script to clean output directories
-- **test_sanitization.py**: Demo script showing different sanitization levels
+- **tests/test_sanitization.py**: Demo script showing different sanitization levels
 
 ### Output Directories
 
 - **data/outputs/text/**: Extracted text files (one per page)
 - **data/outputs/tables/**: Extracted tables in markdown format
-- **data/outputs/enhanced_markdown/**: Enhanced markdown with integrated tables
+- **data/outputs/markdown/**: Structured and enhanced markdown files
 
 ## Process Flow Diagrams
 
@@ -313,21 +313,54 @@ Three sanitization levels are available:
 A test script is provided to demonstrate the effect of different sanitization levels:
 
 ```bash
-python test_sanitization.py
+python tests/test_sanitization.py
 ```
 
 This script creates a sample file with garbled text and applies all three sanitization levels sequentially, showing the progressive improvement in text quality.
 
+## Module Usage Examples
+
+### Using the Complete Pipeline
+
+Process all PDF files in the `data/sourcedocs` directory with the default settings:
+
+```bash
+python -m pdf_processor
+```
+
+To process specific PDF files:
+
+```bash
+python -m pdf_processor path/to/your/file.pdf
+```
+
+### Multiple Files
+
+Process multiple PDF files at once:
+
+```bash
+python -m pdf_processor file1.pdf file2.pdf file3.pdf
+```
+
+### Optional Processing Parameters
+
+```bash
+python -m pdf_processor [OPTIONS] [pdf_paths ...]
+
+Options:
+  --log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
+                        Set logging level (default: INFO)
+```
+
 ## Scripts and Output Files
 
-| Script | Purpose | Output Files | Location |
+| Module | Purpose | Output Files | Location |
 |--------|---------|--------------|----------|
-| **pdf_table_extractor.py** | Extracts tables from PDF using camelot-py | Table markdown files | `outputs/tables/{pdf_name}_table_*.md` & `outputs/tables/clean/{pdf_name}_clean_*.md` |
-| **pdf_text_extractor.py** | Extracts text from PDF pages | Text files for each page | `outputs/text/{pdf_name}_page_*.txt` |
-| **pdf_to_basic_markdown.py** | Creates basic structured markdown | Basic structured markdown | `outputs/markdown/{pdf_name}_structured.md` |
-| **pdf_to_enhanced_markdown.py** | Creates enhanced structured markdown with better field extraction | Improved structured markdown | `outputs/markdown/{pdf_name}_improved.md` |
-| **pdf_processing_pipeline.py** | Runs the entire PDF processing pipeline | All output files | `outputs/` |
-| **sanitize_pdf_extracts.py** | Sanitizes and improves extracted PDF content | None | N/A |
+| **pdf_processor.extractors.table_extractor** | Extracts tables from PDF using camelot-py | Table markdown files | `outputs/tables/{pdf_name}_table_*.md` |
+| **pdf_processor.extractors.text_extractor** | Extracts text from PDF pages | Text files for each page | `outputs/text/{pdf_name}_page_*.txt` |
+| **pdf_processor.converters.enhanced_markdown** | Creates structured and enhanced markdown | Structured and enhanced markdown | `outputs/markdown/{pdf_name}_structured.md` & `outputs/markdown/{pdf_name}_enhanced.md` |
+| **pdf_processor.pipeline** | Orchestrates the entire PDF processing pipeline | All output files | `outputs/` |
+| **pdf_processor.utils.cleaning** | Sanitizes and improves extracted PDF content | Cleaned files | All output directories |
 | **delete_outputs.py** | Deletes generated files to start fresh | None | N/A |
 
 ## Managing Output Files
@@ -383,39 +416,37 @@ The delete script will:
 4. Support custom output directories
 5. Show the directory structure after deletion is complete
 
-## Usage Examples
+## Usage
 
-### Using the Complete Pipeline
+### 1. Table Extraction
 
-Process all PDF files in the `data/sourcedocs` directory with the default settings:
-
-```bash
-python -m pdf_processor
-```
-
-To process specific PDF files:
+To extract tables from a PDF (as part of the pipeline):
 
 ```bash
 python -m pdf_processor path/to/your/file.pdf
 ```
 
-### Multiple Files
+This will create markdown files for tables found in the PDF in the `outputs/tables` directory.
 
-Process multiple PDF files at once:
+### 2. Full Text Extraction
 
-```bash
-python -m pdf_processor file1.pdf file2.pdf file3.pdf
-```
-
-### Optional Processing Parameters
+All text extraction is handled by the main processing pipeline:
 
 ```bash
-python -m pdf_processor [OPTIONS] [pdf_paths ...]
-
-Options:
-  --log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
-                        Set logging level (default: INFO)
+python -m pdf_processor path/to/your/file.pdf
 ```
+
+This will create text files for each page of the PDF in the `outputs/text` directory.
+
+### 3. Structured Markdown Generation
+
+To generate structured markdown files from the PDF:
+
+```bash
+python -m pdf_processor path/to/your/file.pdf
+```
+
+This will create both `outputs/markdown/{pdf_name}_structured.md` and `outputs/markdown/{pdf_name}_enhanced.md` files with proper section recognition and field extraction.
 
 ## Environment Setup
 
@@ -456,48 +487,6 @@ On Windows:
 # Using Chocolatey
 choco install ghostscript
 ```
-
-## Usage
-
-### 1. Table Extraction
-
-To extract tables from a PDF:
-
-```bash
-python pdf_table_extractor.py
-```
-
-This will create markdown files for tables found in the PDF in the `outputs/tables` directory.
-
-### 2. Full Text Extraction
-
-To extract all text from the PDF:
-
-```bash
-python pdf_text_extractor.py
-```
-
-This will create text files for each page of the PDF in the `outputs/text` directory.
-
-### 3. Basic Structured Markdown
-
-To generate a structured markdown file from the PDF:
-
-```bash
-python pdf_to_basic_markdown.py
-```
-
-This will create `outputs/markdown/{pdf_name}_structured.md` file with sections and subsections.
-
-### 4. Enhanced Structured Markdown
-
-For the most refined markdown output:
-
-```bash
-python pdf_to_enhanced_markdown.py
-```
-
-This will create an `outputs/markdown/{pdf_name}_improved.md` file with better section recognition and field extraction.
 
 ## Customization
 
