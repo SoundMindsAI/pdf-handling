@@ -20,7 +20,6 @@ This repository contains a set of scripts to parse PDF documents and convert the
 - [Features](#features)
 - [Advanced Features](#advanced-features)
   - [Robust Logging System](#robust-logging-system)
-- [Recent Improvements](#recent-improvements)
 - [Sanitization Improvements](#sanitization-improvements)
 - [Sanitization Process](#sanitization-process)
 - [How to Use the Sanitization Scripts](#how-to-use-the-sanitization-scripts)
@@ -100,41 +99,41 @@ graph TD
 ```mermaid
 flowchart LR
     subgraph Input["Input (PDF Source)"]
-        style Input fill:#ffcc80,stroke:#ff9800,stroke-width:2px,color:#000000,font-weight:bold
+        style Input fill:#ffcc80,stroke:#ff9800,stroke-width:2px
         PDF[<font color="black">PDF Document</font>]
-        style PDF fill:#ffcc80,stroke:#ff9800,stroke-width:2px,color:#000000,font-weight:bold
+        style PDF fill:#ffcc80,stroke:#ff9800,stroke-width:2px
     end
     
     subgraph Extraction["Extraction Phase"]
-        style Extraction fill:#90caf9,stroke:#1976d2,stroke-width:2px,color:#000000,font-weight:bold
+        style Extraction fill:#90caf9,stroke:#1976d2,stroke-width:2px
         TextExtractor[<font color="black">Text Extractor Module</font>]
         TableExtractor[<font color="black">Table Extractor Module</font>]
-        style TextExtractor fill:#90caf9,stroke:#1976d2,stroke-width:2px,color:#000000,font-weight:bold
-        style TableExtractor fill:#90caf9,stroke:#1976d2,stroke-width:2px,color:#000000,font-weight:bold
+        style TextExtractor fill:#90caf9,stroke:#1976d2,stroke-width:2px
+        style TableExtractor fill:#90caf9,stroke:#1976d2,stroke-width:2px
     end
     
     subgraph Processing["Processing Phase"]
-        style Processing fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px,color:#000000,font-weight:bold
+        style Processing fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
         Cleaning[<font color="black">Text Cleaning Module</font>]
         SectionDetection[<font color="black">Section Detection</font>]
         SubsectionDetection[<font color="black">Subsection Detection</font>]
         FieldExtraction[<font color="black">Field Extraction</font>]
-        style Cleaning fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px,color:#000000,font-weight:bold
-        style SectionDetection fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px,color:#000000,font-weight:bold
-        style SubsectionDetection fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px,color:#000000,font-weight:bold
-        style FieldExtraction fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px,color:#000000,font-weight:bold
+        style Cleaning fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
+        style SectionDetection fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
+        style SubsectionDetection fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
+        style FieldExtraction fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
     end
     
     subgraph Output["Output Files"]
-        style Output fill:#a5d6a7,stroke:#388e3c,stroke-width:2px,color:#000000,font-weight:bold
+        style Output fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
         TablesMD[<font color="black">Table Markdown</font>]
         PageText[<font color="black">Page Text Files</font>]
         StructuredMD[<font color="black">Structured Markdown</font>]
         EnhancedMD[<font color="black">Enhanced Markdown</font>]
-        style TablesMD fill:#a5d6a7,stroke:#388e3c,stroke-width:2px,color:#000000,font-weight:bold
-        style PageText fill:#a5d6a7,stroke:#388e3c,stroke-width:2px,color:#000000,font-weight:bold
-        style StructuredMD fill:#a5d6a7,stroke:#388e3c,stroke-width:2px,color:#000000,font-weight:bold
-        style EnhancedMD fill:#a5d6a7,stroke:#388e3c,stroke-width:2px,color:#000000,font-weight:bold
+        style TablesMD fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
+        style PageText fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
+        style StructuredMD fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
+        style EnhancedMD fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
     end
     
     PDF --> TextExtractor
@@ -234,35 +233,6 @@ python pdf_processing_pipeline.py --log-level=WARNING
 ```
 
 Log files can be found in the `logs/` directory with timestamps for easy identification.
-
-## Recent Improvements
-
-### Updated on February 26, 2025
-
-1. **Consolidated Sanitization Tools**
-   - Created a unified sanitization interface with three cleaning levels: basic, deep, and ultra
-   - Consolidated overlapping functionality from multiple scripts for clearer code organization
-   - Added comprehensive documentation and usage examples for all sanitization levels
-
-2. **Enhanced Markdown Cleanup**
-   - Improved handling of encoding issues in markdown files
-   - Added special handling for `improved_guidebook.md` and `structured_guidebook.md` with complete replacements
-   - Fixed header formatting and structure in markdown files
-   - Added metadata notes to indicate when files were last cleaned
-
-3. **Text File Improvements**
-   - Enhanced text extraction with better encoding handling
-   - Implemented systematic cleaning of extracted text files
-
-4. **Dynamic File Naming**
-   - Modified the PDF processing pipeline to generate output files named by the original PDF filename
-   - Generated files now follow patterns like `{pdf_name}_structured.md`, `{pdf_name}_improved.md`, etc.
-   - Provides clear traceability between source PDFs and generated files
-
-5. **Development Environment**
-   - Added requirements.txt with specific package versions for reproducible environment setup
-   - Updated conda environment setup instructions with Python 3.11 specification
-   - Added detailed installation instructions for different operating systems
 
 ## Sanitization Improvements
 
