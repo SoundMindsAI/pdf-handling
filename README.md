@@ -171,7 +171,7 @@ Log files can be found in the `logs/` directory with timestamps for easy identif
 
 5. **Development Environment**
    - Added requirements.txt with specific package versions for reproducible environment setup
-   - Updated conda environment setup instructions with Python 3.8 specification
+   - Updated conda environment setup instructions with Python 3.11 specification
    - Added detailed installation instructions for different operating systems
 
 ## Sanitization Improvements
@@ -381,67 +381,34 @@ The delete script will:
 
 ### Using the Complete Pipeline
 
-Process a PDF document through the entire pipeline:
+Process all PDF files in the `data/sourcedocs` directory with the default settings:
 
 ```bash
-python pdf_processing_pipeline.py --pdf_path=./sourcedocs/your_pdf_file.pdf
+python -m pdf_processor
 ```
 
-Skip specific processing steps:
+To process specific PDF files:
 
 ```bash
-# Skip table extraction and basic markdown generation
-python pdf_processing_pipeline.py --pdf_path=./sourcedocs/your_pdf_file.pdf --skip=tables,basic
-
-# Only generate enhanced markdown (skip all other steps)
-python pdf_processing_pipeline.py --pdf_path=./sourcedocs/your_pdf_file.pdf --skip=tables,text,basic
+python -m pdf_processor path/to/your/file.pdf
 ```
 
-### Using Individual Scripts
+### Multiple Files
 
-Each script can also be run independently with various options:
-
-#### Table Extraction
+Process multiple PDF files at once:
 
 ```bash
-# Extract tables with default options
-python pdf_table_extractor.py
-
-# Specify a different PDF file
-python pdf_table_extractor.py --pdf_path=./sourcedocs/other_document.pdf
+python -m pdf_processor file1.pdf file2.pdf file3.pdf
 ```
 
-#### Text Extraction
+### Optional Processing Parameters
 
 ```bash
-# Extract text with default options
-python pdf_text_extractor.py
+python -m pdf_processor [OPTIONS] [pdf_paths ...]
 
-# Specify a different PDF file and output directory
-python pdf_text_extractor.py --pdf_path=./sourcedocs/other_document.pdf --output_dir=./custom_output/text
-```
-
-#### Basic Markdown Generation
-
-```bash
-# Generate basic structured markdown with default options
-python pdf_to_basic_markdown.py
-
-# Specify a different PDF file and output file
-python pdf_to_basic_markdown.py --pdf_path=./sourcedocs/other_document.pdf --output_file=./custom_output/basic.md
-```
-
-#### Enhanced Markdown Generation
-
-```bash
-# Generate enhanced structured markdown with default options
-python pdf_to_enhanced_markdown.py
-
-# Specify a different PDF file and output file
-python pdf_to_enhanced_markdown.py --pdf_path=./sourcedocs/other_document.pdf --output_file=./custom_output/enhanced.md
-
-# Run with detailed logging for debugging
-python pdf_to_enhanced_markdown.py --pdf_path=./sourcedocs/other_document.pdf --output_file=./custom_output/enhanced.md --log-level=DEBUG
+Options:
+  --log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
+                        Set logging level (default: INFO)
 ```
 
 ## Environment Setup
@@ -449,8 +416,8 @@ python pdf_to_enhanced_markdown.py --pdf_path=./sourcedocs/other_document.pdf --
 It's recommended to use a conda environment:
 
 ```bash
-# Create a new conda environment with Python 3.8
-conda create -n pdf_parser python=3.8
+# Create a new conda environment with Python 3.11
+conda create -n pdf_parser python=3.11
 conda activate pdf_parser
 
 # Install dependencies using requirements.txt
@@ -537,29 +504,3 @@ This will create an `outputs/markdown/{pdf_name}_improved.md` file with better s
 - Large PDFs may require more processing time
 - Complex formatting in PDFs might affect extraction accuracy
 - PDFs with unusual characters or encoding may require additional cleaning steps
-
-## Quick Start
-
-To process a PDF file with the default settings (extract text, extract tables, and convert to enhanced markdown):
-
-```bash
-python -m pdf_processor path/to/your/file.pdf
-```
-
-### Multiple Files
-
-Process multiple PDF files at once:
-
-```bash
-python -m pdf_processor file1.pdf file2.pdf file3.pdf
-```
-
-### Optional Processing Parameters
-
-```bash
-python -m pdf_processor [OPTIONS] pdf_paths [pdf_paths ...]
-
-Options:
-  --log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
-                        Set logging level (default: INFO)
-```
