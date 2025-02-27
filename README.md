@@ -75,7 +75,7 @@ These scripts are designed to extract text and tables from PDF documents, clean 
 
 ```mermaid
 graph TD
-    PDF[PDF Document] --> PipelineModule[pdf_processor.pipeline\nProcess PDF]
+    PDF[PDF Document] --> PipelineModule[pdf_processor.pipelineProcess PDF]
     PipelineModule --> TextExtractor[pdf_processor.extractors.text_extractor\nPyPDF]
     PipelineModule --> TableExtractor[pdf_processor.extractors.table_extractor\nCamelot-py]
     TextExtractor --> ExtractedText["Page Text Files (.txt)"]
@@ -86,9 +86,9 @@ graph TD
     EnhancedMarkdown --> StructuredMD["Structured Markdown"]
     EnhancedMarkdown --> ImprovedMD["Enhanced Markdown"]
     
-    classDef input fill:#ffcc80,stroke:#ff9800,stroke-width:2px;
-    classDef process fill:#90caf9,stroke:#1976d2,stroke-width:2px;
-    classDef output fill:#a5d6a7,stroke:#388e3c,stroke-width:2px;
+    classDef input fill:#ffcc80,stroke:#ff9800,stroke-width:2px,color:#000000,font-weight:bold;
+    classDef process fill:#90caf9,stroke:#1976d2,stroke-width:2px,color:#000000,font-weight:bold;
+    classDef output fill:#a5d6a7,stroke:#388e3c,stroke-width:2px,color:#000000,font-weight:bold;
     
     class PDF input;
     class PipelineModule,TextExtractor,TableExtractor,CleaningModule,EnhancedMarkdown process;
@@ -100,41 +100,41 @@ graph TD
 ```mermaid
 flowchart LR
     subgraph Input["Input (PDF Source)"]
-        style Input fill:#ffcc80,stroke:#ff9800,stroke-width:2px
-        PDF[PDF Document]
-        style PDF fill:#ffcc80,stroke:#ff9800,stroke-width:2px
+        style Input fill:#ffcc80,stroke:#ff9800,stroke-width:2px,color:#000000,font-weight:bold
+        PDF[<font color="black">PDF Document</font>]
+        style PDF fill:#ffcc80,stroke:#ff9800,stroke-width:2px,color:#000000,font-weight:bold
     end
     
     subgraph Extraction["Extraction Phase"]
-        style Extraction fill:#90caf9,stroke:#1976d2,stroke-width:2px
-        TextExtractor[Text Extractor Module]
-        TableExtractor[Table Extractor Module]
-        style TextExtractor fill:#90caf9,stroke:#1976d2,stroke-width:2px
-        style TableExtractor fill:#90caf9,stroke:#1976d2,stroke-width:2px
+        style Extraction fill:#90caf9,stroke:#1976d2,stroke-width:2px,color:#000000,font-weight:bold
+        TextExtractor[<font color="black">Text Extractor Module</font>]
+        TableExtractor[<font color="black">Table Extractor Module</font>]
+        style TextExtractor fill:#90caf9,stroke:#1976d2,stroke-width:2px,color:#000000,font-weight:bold
+        style TableExtractor fill:#90caf9,stroke:#1976d2,stroke-width:2px,color:#000000,font-weight:bold
     end
     
     subgraph Processing["Processing Phase"]
-        style Processing fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
-        Cleaning[Text Cleaning Module]
-        SectionDetection[Section Detection]
-        SubsectionDetection[Subsection Detection]
-        FieldExtraction[Field Extraction]
-        style Cleaning fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
-        style SectionDetection fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
-        style SubsectionDetection fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
-        style FieldExtraction fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
+        style Processing fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px,color:#000000,font-weight:bold
+        Cleaning[<font color="black">Text Cleaning Module</font>]
+        SectionDetection[<font color="black">Section Detection</font>]
+        SubsectionDetection[<font color="black">Subsection Detection</font>]
+        FieldExtraction[<font color="black">Field Extraction</font>]
+        style Cleaning fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px,color:#000000,font-weight:bold
+        style SectionDetection fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px,color:#000000,font-weight:bold
+        style SubsectionDetection fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px,color:#000000,font-weight:bold
+        style FieldExtraction fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px,color:#000000,font-weight:bold
     end
     
     subgraph Output["Output Files"]
-        style Output fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
-        TablesMD[Table Markdown]
-        PageText[Page Text Files]
-        StructuredMD[Structured Markdown]
-        EnhancedMD[Enhanced Markdown]
-        style TablesMD fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
-        style PageText fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
-        style StructuredMD fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
-        style EnhancedMD fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
+        style Output fill:#a5d6a7,stroke:#388e3c,stroke-width:2px,color:#000000,font-weight:bold
+        TablesMD[<font color="black">Table Markdown</font>]
+        PageText[<font color="black">Page Text Files</font>]
+        StructuredMD[<font color="black">Structured Markdown</font>]
+        EnhancedMD[<font color="black">Enhanced Markdown</font>]
+        style TablesMD fill:#a5d6a7,stroke:#388e3c,stroke-width:2px,color:#000000,font-weight:bold
+        style PageText fill:#a5d6a7,stroke:#388e3c,stroke-width:2px,color:#000000,font-weight:bold
+        style StructuredMD fill:#a5d6a7,stroke:#388e3c,stroke-width:2px,color:#000000,font-weight:bold
+        style EnhancedMD fill:#a5d6a7,stroke:#388e3c,stroke-width:2px,color:#000000,font-weight:bold
     end
     
     PDF --> TextExtractor
