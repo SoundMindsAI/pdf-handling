@@ -42,13 +42,13 @@ graph TD
     PDF[PDF Document] --> PipelineModule[pdf_processor.pipeline\nProcess PDF]
     PipelineModule --> TextExtractor[pdf_processor.extractors.text_extractor\nPyPDF]
     PipelineModule --> TableExtractor[pdf_processor.extractors.table_extractor\nCamelot-py]
-    TextExtractor --> ExtractedText[{pdf_name}_page_*.txt]
-    TableExtractor --> TablesMarkdown[{pdf_name}_table_*.md]
+    TextExtractor --> ExtractedText["Page Text Files (.txt)"]
+    TableExtractor --> TablesMarkdown["Table Markdown Files (.md)"]
     ExtractedText --> CleaningModule[pdf_processor.utils.cleaning]
     TablesMarkdown --> CleaningModule
     CleaningModule --> EnhancedMarkdown[pdf_processor.converters.enhanced_markdown]
-    EnhancedMarkdown --> StructuredMD[{pdf_name}_structured.md]
-    EnhancedMarkdown --> ImprovedMD[{pdf_name}_enhanced.md]
+    EnhancedMarkdown --> StructuredMD["Structured Markdown"]
+    EnhancedMarkdown --> ImprovedMD["Enhanced Markdown"]
     
     classDef input fill:#f9f,stroke:#333,stroke-width:2px;
     classDef process fill:#bbf,stroke:#333,stroke-width:2px;
