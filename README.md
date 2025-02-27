@@ -204,7 +204,7 @@ Our sanitization pipeline now includes several critical improvements:
 
 1. **Binary-Level Cleaning**: 
    - Addresses hidden control characters (like 0x03) that disrupt text flow but aren't visible in text editors
-   - Applied at all sanitization levels
+   - Applied automatically as part of the main processing pipeline
 
 2. **Pattern-Based Cleaning**:
    - Document-specific patterns are now detected and fixed
@@ -214,9 +214,9 @@ Our sanitization pipeline now includes several critical improvements:
    - Improved error handling ensures the pipeline continues even if specific cleaning steps fail
    - Detailed error logging helps diagnose issues with specific files
 
-4. **Custom Cleanup Tool**:
-   - Added `final_cleanup.py` for fixing specific document patterns that might be missed by general rules
-   - Can be customized for particular documents or extraction issues
+4. **Integrated Cleaning Process**:
+   - Cleaning is now fully integrated into the pipeline in the `pdf_processor.utils.cleaning` module
+   - Ultra-deep cleaning is applied automatically to all processed documents
 
 #### Common PDF Extraction Issues Fixed
 
