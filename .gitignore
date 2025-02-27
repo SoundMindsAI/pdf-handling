@@ -1,0 +1,135 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.whl
+*.tar.gz
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+.python-version
+
+# Dependencies
+poetry.lock
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Testing and coverage
+.tox/
+.coverage
+.coverage.*
+coverage.xml
+coverage.lcov
+nosetests.xml
+.pytest_cache/
+.hypothesis/
+htmlcov/
+junit-*.xml
+
+# Cache
+__pypackages__/
+.cache/
+.ruff_cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Project-specific directories
+data/outputs/
+data/sourcedocs/
+!data/outputs/.gitkeep
+!data/outputs/README.md
+!data/outputs/*/README.md
+!data/sourcedocs/.gitkeep
+!data/sourcedocs/README.md
+
+# Don't track source PDF files
+data/sourcedocs/*.pdf
+
+# Data and databases
+data/raw/*
+data/processed/*
+data/models/*
+models/*
+src/log_anomaly_detector/models/saved_models
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/models/.gitkeep
+*.db
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+test_db.*
+testdb
+file:memdb1*
+**/file:memdb1*
+tests/load/*.db
+tests/load/*.sqlite*
+tests/**/*.db
+tests/**/*.sqlite*
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Rotated log files
+*.log.*
+
+# Keep directory structure
+!logs/.gitkeep
+
+# Documentation
+docs/_build/
+_build/
+docs/api/
+
+# Local configuration
+*.env
+config.yaml
+local_settings.py
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+*.bak
+*.tmp
+*.temp
+Desktop.ini
+$RECYCLE.BIN/

@@ -1,0 +1,209 @@
+# PDF Parsing Process Documentation
+
+This document provides detailed diagrams explaining the process of converting PDF documents to structured markdown.
+
+## High-Level Architecture
+
+```mermaid
+graph TD
+    subgraph Input
+        PDF[PDF Document]
+    end
+    
+    subgraph "Parsing Layer"
+        Camelot[Camelot-py Parser]
+        PyPDF[PyPDF Parser]
+    end
+    
+    subgraph "Processing Layer"
+        CleaningModule[Text Cleaning Module]
+        StructureModule[Structure Detection Module]
+        FieldModule[Field Extraction Module]
+    end
+    
+    subgraph "Output Layer"
+        Tables[Table Markdown]
+        RawText[Raw Text Files]
+        Basic[Basic Structured Markdown]
+        Advanced[Advanced Structured Markdown]
+    end
+    
+    PDF --> Camelot
+    PDF --> PyPDF
+    Camelot --> Tables
+    PyPDF --> RawText
+    RawText --> CleaningModule
+    CleaningModule --> StructureModule
+    StructureModule --> FieldModule
+    FieldModule --> Basic
+    FieldModule --> Advanced
+    
+    classDef input fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef parser fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef process fill:#bfb,stroke:#333,stroke-width:2px;
+    classDef output fill:#fbb,stroke:#333,stroke-width:2px;
+    
+    class PDF input;
+    class Camelot,PyPDF parser;
+    class CleaningModule,StructureModule,FieldModule process;
+    class Tables,RawText,Basic,Advanced output;
+```
+
+## Data Transformation Pipeline
+
+```mermaid
+flowchart LR
+    subgraph "PDF Document"
+        RawPDF[Raw PDF Content]
+    end
+    
+    subgraph "Extraction Phase"
+        Tables[Table Data]
+        Text[Text Content]
+        Images[Images]
+    end
+    
+    subgraph "Processing Phase"
+        CleanText[Cleaned Text]
+        StructuredText[Structured Text]
+        SectionedText[Sectioned Text]
+    end
+    
+    subgraph "Field Extraction Phase"
+        KeyValuePairs[Key-Value Pairs]
+        FormattedFields[Formatted Fields]
+    end
+    
+    subgraph "Output Phase"
+        Markdown[Markdown Document]
+    end
+    
+    RawPDF --> Tables
+    RawPDF --> Text
+    RawPDF --> Images
+    
+    Tables --> CleanText
+    Text --> CleanText
+    CleanText --> StructuredText
+    StructuredText --> SectionedText
+    
+    SectionedText --> KeyValuePairs
+    KeyValuePairs --> FormattedFields
+    
+    FormattedFields --> Markdown
+```
+
+## PDF Parsing Strategy
+
+```mermaid
+flowchart TD
+    Start[Start] --> ReadPDF[Read PDF File]
+    ReadPDF --> ExtractComponents[Extract Components]
+    
+    ExtractComponents --> ExtractTables[Extract Tables]
+    ExtractComponents --> ExtractText[Extract Text]
+    
+    ExtractTables --> ProcessTables[Process Tables]
+    ExtractText --> CleanText[Clean Text]
+    
+    CleanText --> IdentifySections[Identify Sections]
+    IdentifySections --> IdentifySubsections[Identify Subsections]
+    
+    IdentifySubsections --> ExtractFields[Extract Fields]
+    ProcessTables --> ExtractFields
+    
+    ExtractFields --> FormatMarkdown[Format as Markdown]
+    FormatMarkdown --> WriteOutput[Write to Output File]
+    WriteOutput --> End[End]
+```
+
+## Text Cleaning Process
+
+```mermaid
+flowchart LR
+    RawText[Raw Extracted Text] --> RemoveCID[Remove CID Patterns]
+    RemoveCID --> FixEncoding[Fix Encoding Issues]
+    FixEncoding --> NormalizeWhitespace[Normalize Whitespace]
+    NormalizeWhitespace --> CleanText[Cleaned Text]
+```
+
+## Section Detection Process
+
+```mermaid
+stateDiagram-v2
+    [*] --> FullText
+    FullText --> SectionIdentification: Identify Known Section Titles
+    
+    SectionIdentification --> SectionExtraction: Extract Section Content
+    SectionExtraction --> SubsectionIdentification: Identify Subsections
+    
+    SubsectionIdentification --> KeyPhraseDetection: Detect Key Phrases
+    SubsectionIdentification --> QuestionDetection: Detect Questions
+    SubsectionIdentification --> PatternDetection: Detect Patterns
+    
+    KeyPhraseDetection --> SubsectionExtraction
+    QuestionDetection --> SubsectionExtraction
+    PatternDetection --> SubsectionExtraction
+    
+    SubsectionExtraction --> [*]
+```
+
+## Field Extraction Process
+
+```mermaid
+flowchart TD
+    Start[Start Field Extraction] --> LoadPatterns[Load Field Patterns]
+    LoadPatterns --> ProcessContent[Process Content]
+    
+    ProcessContent --> MatchPatterns[Match Regex Patterns]
+    MatchPatterns --> ExtractFieldNames[Extract Field Names]
+    MatchPatterns --> ExtractFieldValues[Extract Field Values]
+    
+    ExtractFieldNames --> CleanFieldNames[Clean Field Names]
+    ExtractFieldValues --> CleanFieldValues[Clean Field Values]
+    
+    CleanFieldNames --> CreatePairs[Create Field Name-Value Pairs]
+    CleanFieldValues --> CreatePairs
+    
+    CreatePairs --> FormatFields[Format as Markdown Fields]
+    FormatFields --> End[End Field Extraction]
+```
+
+## Comparison of PDF Parsing Methods
+
+```mermaid
+graph TD
+    subgraph "Table Extraction (pdf_table_extractor.py)"
+        B1[Extract Tables] --> B2[Convert to Markdown]
+        B2 --> B3[Save Table Files]
+    end
+    
+    subgraph "Text Extraction (pdf_text_extractor.py)"
+        T1[Extract Text] --> T2[Clean Text]
+        T2 --> T3[Save Page Files]
+    end
+    
+    subgraph "Basic Markdown (pdf_to_basic_markdown.py)"
+        M1[Load Text] --> M2[Split into Sections]
+        M2 --> M3[Identify Subsections]
+        M3 --> M4[Format as Markdown]
+        M4 --> M5[Save Markdown File]
+    end
+    
+    subgraph "Enhanced Markdown (pdf_to_enhanced_markdown.py)"
+        I1[Extract All Text] --> I2[Clean and Process]
+        I2 --> I3[Advanced Section Detection]
+        I3 --> I4[Pattern-based Field Extraction]
+        I4 --> I5[Generate Enhanced Markdown]
+    end
+    
+    classDef table fill:#ffcccc,stroke:#333,stroke-width:1px;
+    classDef text fill:#ccffcc,stroke:#333,stroke-width:1px;
+    classDef basic fill:#ccccff,stroke:#333,stroke-width:1px;
+    classDef enhanced fill:#ffffcc,stroke:#333,stroke-width:1px;
+    
+    class B1,B2,B3 table;
+    class T1,T2,T3 text;
+    class M1,M2,M3,M4,M5 basic;
+    class I1,I2,I3,I4,I5 enhanced;
+```
