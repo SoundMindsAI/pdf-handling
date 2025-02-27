@@ -6,6 +6,42 @@
 
 This repository contains a set of scripts to parse PDF documents and convert them into structured markdown format.
 
+## Table of Contents
+
+- [Project Overview](#project-overview)
+- [Project Structure](#project-structure)
+  - [Main Components](#main-components)
+  - [Helper Scripts](#helper-scripts)
+  - [Output Directories](#output-directories)
+- [Process Flow Diagrams](#process-flow-diagrams)
+  - [Overall Workflow](#overall-workflow)
+  - [Detailed Process Flow for Enhanced Parser](#detailed-process-flow-for-enhanced-parser)
+  - [Component Data Flow](#component-data-flow)
+- [Features](#features)
+- [Advanced Features](#advanced-features)
+  - [Robust Logging System](#robust-logging-system)
+- [Recent Improvements](#recent-improvements)
+- [Sanitization Improvements](#sanitization-improvements)
+- [Sanitization Process](#sanitization-process)
+- [How to Use the Sanitization Scripts](#how-to-use-the-sanitization-scripts)
+  - [Sanitization Levels](#sanitization-levels)
+  - [Testing the Sanitization Levels](#testing-the-sanitization-levels)
+- [Module Usage Examples](#module-usage-examples)
+  - [Using the Complete Pipeline](#using-the-complete-pipeline)
+  - [Multiple Files](#multiple-files)
+  - [Optional Processing Parameters](#optional-processing-parameters)
+- [Scripts and Output Files](#scripts-and-output-files)
+- [Managing Output Files](#managing-output-files)
+  - [Cleaning Output Files](#cleaning-output-files)
+  - [Deleting Output Files](#deleting-output-files)
+- [Usage](#usage)
+  - [Table Extraction](#table-extraction)
+  - [Full Text Extraction](#full-text-extraction)
+  - [Structured Markdown Generation](#structured-markdown-generation)
+- [Environment Setup](#environment-setup)
+- [Customization](#customization)
+- [Performance Considerations](#performance-considerations)
+
 ## Project Overview
 
 These scripts are designed to extract text and tables from PDF documents, clean the extracted data, and format it into well-structured markdown files. This can be useful for converting complex PDF documents (like guidebooks, manuals, or reports) into more accessible and readable formats.
