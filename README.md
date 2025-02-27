@@ -86,9 +86,9 @@ graph TD
     EnhancedMarkdown --> StructuredMD["Structured Markdown"]
     EnhancedMarkdown --> ImprovedMD["Enhanced Markdown"]
     
-    classDef input fill:#f9f,stroke:#333,stroke-width:2px;
-    classDef process fill:#bbf,stroke:#333,stroke-width:2px;
-    classDef output fill:#bfb,stroke:#333,stroke-width:2px;
+    classDef input fill:#ffcc80,stroke:#ff9800,stroke-width:2px;
+    classDef process fill:#90caf9,stroke:#1976d2,stroke-width:2px;
+    classDef output fill:#a5d6a7,stroke:#388e3c,stroke-width:2px;
     
     class PDF input;
     class PipelineModule,TextExtractor,TableExtractor,CleaningModule,EnhancedMarkdown process;
@@ -99,27 +99,42 @@ graph TD
 
 ```mermaid
 flowchart LR
-    subgraph Input
+    subgraph Input["Input (PDF Source)"]
+        style Input fill:#ffcc80,stroke:#ff9800,stroke-width:2px
         PDF[PDF Document]
+        style PDF fill:#ffcc80,stroke:#ff9800,stroke-width:2px
     end
     
-    subgraph Extraction
+    subgraph Extraction["Extraction Phase"]
+        style Extraction fill:#90caf9,stroke:#1976d2,stroke-width:2px
         TextExtractor[Text Extractor Module]
         TableExtractor[Table Extractor Module]
+        style TextExtractor fill:#90caf9,stroke:#1976d2,stroke-width:2px
+        style TableExtractor fill:#90caf9,stroke:#1976d2,stroke-width:2px
     end
     
-    subgraph Processing
+    subgraph Processing["Processing Phase"]
+        style Processing fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
         Cleaning[Text Cleaning Module]
         SectionDetection[Section Detection]
         SubsectionDetection[Subsection Detection]
         FieldExtraction[Field Extraction]
+        style Cleaning fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
+        style SectionDetection fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
+        style SubsectionDetection fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
+        style FieldExtraction fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
     end
     
-    subgraph Output
+    subgraph Output["Output Files"]
+        style Output fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
         TablesMD[Table Markdown]
         PageText[Page Text Files]
         StructuredMD[Structured Markdown]
         EnhancedMD[Enhanced Markdown]
+        style TablesMD fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
+        style PageText fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
+        style StructuredMD fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
+        style EnhancedMD fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
     end
     
     PDF --> TextExtractor
@@ -138,27 +153,42 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    subgraph Input
+    subgraph Input["Input (PDF Source)"]
+        style Input fill:#ffcc80,stroke:#ff9800,stroke-width:2px
         PDF[PDF Document]
+        style PDF fill:#ffcc80,stroke:#ff9800,stroke-width:2px
     end
     
-    subgraph Extraction
+    subgraph Extraction["Extraction Tools"]
+        style Extraction fill:#90caf9,stroke:#1976d2,stroke-width:2px
         CamelotPy[Camelot-py\nTable Extraction]
         PyPDF[PyPDF\nText Extraction]
+        style CamelotPy fill:#90caf9,stroke:#1976d2,stroke-width:2px
+        style PyPDF fill:#90caf9,stroke:#1976d2,stroke-width:2px
     end
     
-    subgraph Processing
+    subgraph Processing["Processing Components"]
+        style Processing fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
         Cleaning[Text Cleaning]
         SectionDetection[Section Detection]
         SubsectionDetection[Subsection Detection]
         FieldExtraction[Field Extraction]
+        style Cleaning fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
+        style SectionDetection fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
+        style SubsectionDetection fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
+        style FieldExtraction fill:#ce93d8,stroke:#7b1fa2,stroke-width:2px
     end
     
-    subgraph Output
+    subgraph Output["Output Files"]
+        style Output fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
         TablesMD[Table Markdown]
         PageText[Page Text Files]
         StructuredMD[Structured Markdown]
         ImprovedMD[Improved Markdown]
+        style TablesMD fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
+        style PageText fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
+        style StructuredMD fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
+        style ImprovedMD fill:#a5d6a7,stroke:#388e3c,stroke-width:2px
     end
     
     PDF --> CamelotPy
