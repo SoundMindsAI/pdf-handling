@@ -348,7 +348,7 @@ def enhanced_fix_text(text):
     
     # Fix common markdown formatting issues
     text = re.sub(r'\*{2,}', '**', text)  # Fix multiple asterisks
-    text = re.sub(r'(#{1,6})([^ ])', r'\1 \2')  # Fix missing space after header markers
+    text = re.sub(r'(#{1,6})([^ ])', r'\1 \2', text)  # Fix missing space after header markers
     
     # Collapse multiple blank lines
     text = re.sub(r'\n{3,}', '\n\n', text)
@@ -572,7 +572,7 @@ def ultra_deep_clean_markdown(markdown_text):
     
     # Fix common markdown formatting issues
     markdown_text = re.sub(r'\*{2,}', '**', markdown_text)  # Fix multiple asterisks
-    markdown_text = re.sub(r'(#{1,6})([^ ])', r'\1 \2')  # Fix missing space after header markers
+    markdown_text = re.sub(r'(#{1,6})([^ ])', r'\1 \2', markdown_text)  # Fix missing space after header markers
     
     # Collapse multiple blank lines
     markdown_text = re.sub(r'\n{3,}', '\n\n', markdown_text)
@@ -1129,7 +1129,7 @@ def ensure_valid_markdown(content):
     # Ensure proper list formatting
     # Lists should have a space after the marker (* or - or number.)
     content = re.sub(r'(^|\n)[*+-]([^\s])', r'\1* \2', content, flags=re.MULTILINE)
-    content = re.sub(r'(^|\n)\d+\.([^\s])', r'\1\d+. \2', content, flags=re.MULTILINE)
+    content = re.sub(r'(^|\n)(\d+)\.([^\s])', r'\1\2. \3', content, flags=re.MULTILINE)
     
     # Fix table formatting
     # Tables need proper alignment and spacing

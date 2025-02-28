@@ -17,6 +17,7 @@ import sys
 from pdf_processor.config import DEFAULT_PDF_PATH, TEXT_DIR, TABLES_DIR, ENHANCED_MARKDOWN_DIR
 from pdf_processor.utils.logging import configure_logging, get_logger
 from pdf_processor.utils.cleaning import basic_clean_text, aggressive_clean_text, binary_clean_content
+from pdf_processor.utils.filesystem import ensure_directory
 
 # Get logger for this module
 logger = get_logger(__name__)
@@ -352,16 +353,13 @@ def convert_to_enhanced_markdown(pdf_path, output_file=None):
         ensure_directory(output_dir)
         output_file = os.path.join(output_dir, f"{base_name}.md")
     
-    # Get text files from the extraction process
-    text_dir = os.path.join(TEXT_DIR, base_name)
-    if not os.path.exists(text_dir):
-        logger.error(f"Text directory not found: {text_dir}")
-        return {"success": False, "error": "Text extraction directory not found"}
+    # Get text files from the extraction process - directly from TEXT_DIR
+    text_dir = TEXT_DIR
     
-    # Get page files in correct order
-    page_files = get_sorted_page_files(text_dir)
+    # Check for page files
+    page_files = get_sorted_page_files_with_prefix(text_dir, base_name)
     if not page_files:
-        logger.error(f"No text files found in {text_dir}")
+        logger.error(f"No text files found for {base_name} in {text_dir}")
         return {"success": False, "error": "No text files found"}
     
     # Create empty markdown content to start
@@ -418,6 +416,28 @@ def convert_to_enhanced_markdown(pdf_path, output_file=None):
     except Exception as e:
         logger.error(f"Error creating enhanced markdown: {str(e)}")
         return {"success": False, "error": str(e)}
+
+
+def get_sorted_page_files_with_prefix(text_dir, prefix):
+    """
+    Get a list of page files from the text directory, sorted by page number.
+    This modified version looks for files with a specific prefix rather than
+    assuming a subdirectory structure.
+    
+    Args:
+        text_dir (str): Directory containing text files
+        prefix (str): The base name of the PDF file
+        
+    Returns:
+        list: Sorted list of page files
+    """
+    pattern = os.path.join(text_dir, f"{prefix}_page_*.txt")
+    page_files = glob.glob(pattern)
+    
+    # Sort by page number
+    page_files.sort(key=lambda x: int(re.search(r'page_(\d+)\.txt$', x).group(1)))
+    
+    return page_files
 
 
 def main():
