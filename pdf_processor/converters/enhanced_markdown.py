@@ -16,7 +16,7 @@ import sys
 
 from pdf_processor.config import DEFAULT_PDF_PATH, TEXT_DIR, TABLES_DIR, ENHANCED_MARKDOWN_DIR
 from pdf_processor.utils.logging import configure_logging, get_logger
-from pdf_processor.utils.cleaning import basic_clean_text, aggressive_clean_text, binary_clean_content
+from pdf_processor.utils.cleaning import basic_clean_text, aggressive_clean_text, fixed_binary_clean as binary_clean_content, simple_clean_markdown
 from pdf_processor.utils.filesystem import ensure_directory
 
 # Get logger for this module
@@ -404,6 +404,9 @@ def convert_to_enhanced_markdown(pdf_path, output_file=None):
         tables_dir = os.path.join(TABLES_DIR, base_name)
         markdown_content = add_table_references(markdown_content, tables_dir, pdf_path)
         
+        # Apply simple cleaning to improve readability
+        markdown_content = simple_clean_markdown(markdown_content)
+        
         # Write the markdown content to file
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(markdown_content)
@@ -416,6 +419,61 @@ def convert_to_enhanced_markdown(pdf_path, output_file=None):
     except Exception as e:
         logger.error(f"Error creating enhanced markdown: {str(e)}")
         return {"success": False, "error": str(e)}
+
+
+def post_process_markdown(markdown_file_path):
+    """
+    Apply enhanced post-processing to the generated markdown file.
+    
+    Args:
+        markdown_file_path (str): Path to the markdown file
+        
+    Returns:
+        bool: True if post-processing was successful
+    """
+    from pdf_processor.utils.cleaning import two_pass_markdown_cleanup, simple_clean_markdown
+    
+    try:
+        # First, ensure the file exists
+        if not os.path.exists(markdown_file_path):
+            logger.error(f"Markdown file {markdown_file_path} not found.")
+            return False
+        
+        # Apply special cleaning for enhanced output
+        logger.info(f"Applying enhanced cleaning to markdown files for {os.path.basename(markdown_file_path)}")
+        logger.info(f"Enhanced cleaning of markdown files in {os.path.dirname(markdown_file_path)}")
+        
+        # Read the content first
+        with open(markdown_file_path, 'r', encoding='utf-8', errors='replace') as f:
+            content = f.read()
+        
+        # Apply simple cleaning to improve readability
+        cleaned_content = simple_clean_markdown(content)
+        
+        # Back up the original file
+        backup_file = markdown_file_path + '.bak'
+        import shutil
+        shutil.copy2(markdown_file_path, backup_file)
+        logger.info(f"Created backup of {markdown_file_path} at {backup_file}")
+        
+        # Write the cleaned content back
+        with open(markdown_file_path, 'w', encoding='utf-8') as f:
+            f.write(cleaned_content)
+        
+        # Now perform the two-pass cleanup
+        logger.info(f"Performing enhanced cleaning on markdown file: {markdown_file_path}")
+        success = two_pass_markdown_cleanup(markdown_file_path)
+        
+        if success:
+            logger.info(f"Enhanced cleaning completed for 1 markdown files")
+            return True
+        else:
+            logger.warning(f"Enhanced cleaning failed for {markdown_file_path}")
+            return False
+            
+    except Exception as e:
+        logger.error(f"Error in post-processing markdown file {markdown_file_path}: {str(e)}")
+        return False
 
 
 def get_sorted_page_files_with_prefix(text_dir, prefix):

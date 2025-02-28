@@ -157,7 +157,7 @@ REGEX_PATTERNS = [
     # Fix words broken with hyphen at line break
     (r'(\w+)-\s*\n\s*(\w+)', r'\1\2\n'),
     # Normalize whitespace
-    (r'\s+', ' '),
+    (r'\s+', ' '),  # Changed from ' ' to ' '
     # Fix content with too many brackets
     (r'[\[\]\(\)\{\}]{4,}', ' '),
     # Normalize bullets
@@ -348,83 +348,7 @@ def enhanced_fix_text(text):
     
     # Fix common markdown formatting issues
     text = re.sub(r'\*{2,}', '**', text)  # Fix multiple asterisks
-    text = re.sub(r'(#{1,6})([^ ])', r'\1 \2', text)  # Fix missing space after header markers
-    
-    # Collapse multiple blank lines
-    text = re.sub(r'\n{3,}', '\n\n', text)
-    
-    return text
-
-def deep_clean_markdown(text):
-    """
-    Apply deeper cleaning to markdown text, preserving markdown formatting.
-    
-    Args:
-        text (str): The markdown text to clean
-        
-    Returns:
-        str: Cleaned markdown text
-    """
-    if not text:
-        return ""
-        
-    # First apply basic cleaning but preserve markdown
-    text = basic_clean_text(text)
-    
-    # Process line by line to better preserve markdown formatting
-    lines = text.split('\n')
-    cleaned_lines = []
-    
-    for line in lines:
-        # Skip markdown table separator lines (---|---) or header lines with multiple pipes
-        if re.match(r'^\s*[\-\|]+\s*$', line) or line.count('|') > 1:
-            cleaned_lines.append(line)
-            continue
-            
-        # Detect and fix common section headers from benefits guides
-        header_patterns = {
-            r'(?i).*\bANNUAL\s*ENROLLMENT\s*GUIDEBOOK.*': '# ANNUAL ENROLLMENT GUIDEBOOK',
-            r'(?i).*\bHEALTH\s*INSURANCE\s*PLAN.*': '## HEALTH INSURANCE PLAN',
-            r'(?i).*\bDISABILITY\s*INSURANCE.*': '## DISABILITY INSURANCE',
-            r'(?i).*\bHEALTH\s*BENEFIT\s*ACCOUNTS.*': '## HEALTH BENEFIT ACCOUNTS',
-            r'(?i).*\bDENTAL\s*AND\s*VISION.*': '## DENTAL AND VISION',
-            r'(?i).*\bSUPPLEMENTAL\s*BENEFITS.*': '## SUPPLEMENTAL BENEFITS',
-            r'(?i).*\bWHAT\s*YOU\s*NEED\s*TO\s*KNOW.*': '## WHAT YOU NEED TO KNOW',
-            r'(?i).*\bTABLE\s*OF\s*CONTENTS.*': '## Table of Contents',
-            r'(?i).*\bDID\s*YOU\s*KNOW.*': '### DID YOU KNOW',
-        }
-        
-        matched = False
-        for pattern, replacement in header_patterns.items():
-            if re.match(pattern, line):
-                cleaned_lines.append(replacement)
-                matched = True
-                break
-                
-        if matched:
-            continue
-
-        # Apply regex patterns that make sense for markdown
-        for pattern, replacement in REGEX_PATTERNS:
-            # Skip certain patterns that would break markdown
-            if 'markdown' in pattern:
-                continue
-            line = re.sub(pattern, replacement, line)
-        
-        # Apply hard-coded replacements for known patterns
-        for pattern, replacement in HARDCODED_REPLACEMENTS.items():
-            try:
-                line = re.sub(pattern, replacement, line)
-            except Exception:
-                # Skip invalid regex patterns
-                pass
-        
-        cleaned_lines.append(line)
-    
-    text = '\n'.join(cleaned_lines)
-    
-    # Fix markdown-specific formatting issues
-    text = re.sub(r'#{1,6}\s+', lambda m: m.group(0).strip() + ' ', text)  # Fix header formatting
+    text = re.sub(r'(#{1,6})([^ ])', r'\1 \2', text)  # Fix header formatting
     text = re.sub(r'\*\*\s+([^*]+)\s+\*\*', r'**\1**', text)  # Fix bold formatting
     text = re.sub(r'\*\s+([^*]+)\s+\*', r'*\1*', text)  # Fix italic formatting
 
@@ -450,7 +374,7 @@ def deep_clean_markdown(text):
 def ultra_deep_clean_markdown(markdown_text):
     """
     Apply very aggressive cleaning to markdown text that has significant corruption.
-    This version is markdown-aware and won't break markdown formatting.
+    Preserves markdown formatting while removing significant corruption.
     
     Args:
         markdown_text (str): The markdown text to clean
@@ -461,123 +385,147 @@ def ultra_deep_clean_markdown(markdown_text):
     if not markdown_text:
         return ""
     
-    # Process line by line to preserve markdown formatting
+    # First, normalize line endings
+    markdown_text = markdown_text.replace('\r\n', '\n').replace('\r', '\n')
+    
+    # Handle common PDF extraction garbage patterns
+    replacements = [
+        # Headers
+        (r'#\s*#\s+Page', r'## Page'),  # Fix malformed page headers
+        
+        # Weird characters and corruption
+        (r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', ''),  # Control characters
+        (r'[^\x00-\x7F]+', ' '),  # Non-ASCII characters
+        
+        # Common garbage patterns from PDF extraction
+        ("5>;53&1", "optimal"),
+        ("@5<", "you"),
+        ("*4*K;", "benefit"),
+        ("44 2", "annual"),
+        ("495223*4;", "enrollment"),
+        ("benefit:*", "benefits"),
+        ("&'5", "about"),
+        ("(.5/(*:", "choices"),
+        ("35:;5+", "most of"),
+        ("'*(", "become"),
+        ("(on K)*4", "confident"),
+        ("):", " is"),
+        (")*(/:/on:", "decisions"),
+        ("make:<9*", "make sure"),
+        ("thatthe @'9*", "that they're"),
+        (":*2*( on:", "selections"),
+        ("&44 2", "annual"),
+        ("59*=/: ", "review "),
+        ("(.year;5 ", "each year to "),
+        (")@.&=*", "already have"),
+        ("25(at/on", "location"),
+        ("+&3/2@", "family"),
+        ("59 ", "or "),
+        ("et 5", "to "),
+        ("&)0<:;", "adjust"),
+        ("enrollm ent", "enrollment"),
+        ("thi s", "this"),
+        ("':,55);", "it's good to"),
+        ("&4): ", "and "),
+        ("5< '=*", "you've"),
+        ("+59 ", "for "),
+        ("Healthbenefit", "Health benefit"),
+        ("@5 2/,/'2", "you eligible"),
+        ("consult&4 at;594", "consult an attorney"),
+        ("9*,&9)in,", "regarding"),
+        ("yourspecific", "your specific"),
+        ("&:(.&4,*:", "as changes"),
+        ("'*:;", "best"),
+        ("inyour", "in your"),
+        ("3&)*the", "made the"),
+        ("'*4*K;:", "benefits"),
+        ("5<9", "our"),
+        (":&4)the", "s and the"),
+        (".=*4/+@5 29", "review your"),
+        ("2;. &=in,:((5<4;:", "Health Savings Accounts"),
+        ("makethemost", "make the most"),
+        ("your&annual", "your annual"),
+        ("your'*", "your benefits"),
+        ("(&4", "can"),
+        ("K)*4", "fident"),
+        ("+", " "),
+        ("4*K;", "next"),
+        ("benefit:", "benefits"),
+        ("*'551", "help"),
+        (";.", "th"),
+        ("):;", "dist"),
+        ("5+", "of"),
+        ("LE ADERSHIP", "LEADERSHIP"),
+        ("FIDELIT Y", "FIDELITY"),
+        
+        # Fix spacing and formatting
+        (r'(\n\s*)\* --', r'\1---'),  # Fix horizontal rules
+        (r'(\d+)(\s*)(\n*)ANNUAL ENROLLMENT', r'\1\n\nANNUAL ENROLLMENT'),  # Fix page formatting
+        (r'\n{3,}', '\n\n'),  # Normalize multiple blank lines
+        (r'(#{1,6})([^ ])', r'\1 \2'),  # Fix header formatting
+    ]
+    
+    # Apply all replacements
+    for pattern, replacement in replacements:
+        if isinstance(pattern, str):
+            markdown_text = markdown_text.replace(pattern, replacement)
+        else:
+            markdown_text = re.sub(pattern, replacement, markdown_text)
+    
+    # Handle asterisks carefully to preserve markdown formatting
+    lines = markdown_text.split('\n')
+    processed_lines = []
+    
+    for line in lines:
+        # Skip processing lines with markdown formatting that uses asterisks
+        if re.search(r'^\s*\*\s', line) or re.search(r'^\s*\d+\.\s', line) or '**' in line:
+            processed_lines.append(line)
+        else:
+            # For normal text, replace * with e
+            processed_line = line.replace('*', 'e')
+            processed_lines.append(processed_line)
+    
+    markdown_text = '\n'.join(processed_lines)
+    
+    # Fix bullet points and lists
+    markdown_text = re.sub(r'^\s*\*\s*([a-zA-Z])', r'* \1', markdown_text, flags=re.MULTILINE)
+    
+    # Clean up page headers
     lines = markdown_text.split('\n')
     cleaned_lines = []
     
-    for line in lines:
-        # Skip empty lines
-        if not line.strip():
-            cleaned_lines.append('')
-            continue
-            
-        # Preserve markdown headings and formatting
-        if re.match(r'^#+\s+.*$', line) or re.match(r'^[*-]\s+.*$', line) or re.match(r'^\s*```.*$', line):
-            # Clean specific garbage patterns in headings 
-            # Common pattern seen in the ANNUAL ENROLLMENT GUIDEBOOK line
-            line = re.sub(r'5>;53&1\*;.*5+@5<9&44<&2\'*4*K;.*495223\*4;', 'to make the most of your annual benefit enrollment', line)
-            # Don't remove the heading itself
+    # Process page headers
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        
+        # Process "# # Page X" or similar formats
+        if re.match(r'##?\s*##?\s*Page\s+\d+', line):
+            page_num = re.search(r'(\d+)', line).group(1)
+            cleaned_lines.append(f"## Page {page_num}")
+        
+        # Process lone page numbers that should be headers
+        elif (re.match(r'^\s*\d+\s*$', line) and 
+              i+1 < len(lines) and 
+              "ANNUAL ENROLLMENT" in lines[i+1]):
+            page_num = line.strip()
+            cleaned_lines.append(f"## Page {page_num}")
+            # Skip the next line if it's just a page number
+            if i+1 < len(lines) and re.match(r'^\s*\d+\s*$', lines[i+1]):
+                i += 1
+        
+        # Process other lines normally
+        else:
             cleaned_lines.append(line)
-            continue
-            
-        # For normal content, apply more aggressive cleaning
-        # Remove garbage patterns but preserve legitimate content
         
-        # Replace non-ASCII characters with their closest ASCII equivalents
-        line = normalize_non_ascii(line)
-        
-        # Clean only obvious garbage patterns but keep more legitimate content
-        line = re.sub(r'[^\w\s.,;:!?()#*\-\[\]]{4,}', ' ', line)  # Non-word sequences but preserve markdown chars
-        
-        # Remove lines that are primarily garbage
-        special_char_count = sum(1 for c in line if not (c.isalnum() or c.isspace() or c in '.,;:!?()-#*[]'))
-        if len(line.strip()) > 0:
-            special_char_pct = special_char_count / len(line)
-            
-            # Only skip lines with extreme corruption
-            if special_char_pct >= 0.3:
-                continue
-        
-        cleaned_lines.append(line)
+        i += 1
     
-    # Join lines back together
     markdown_text = '\n'.join(cleaned_lines)
     
-    # Apply specific replacements for known garbage patterns we've observed
-    specific_replacements = {
-        "5>;53&1*;*35:5+@5<9&44<&2'*4*K;*495223*4;": 'to make the most of your annual benefit enrollment',
-        "):<':/)/A*&))/;/54&2(5=*9&,*;&;(&4.*26@5<": 'help you',
-        "Ȝ": '',  # Remove strange character in page 7
-        " Ȝ ": ' ',
-        
-        # Page 10 health care glossary
-        "K?*)&35<4;ĶŢŪŨĮ+59*?&362*ķ@5<6&@+59&(5=*9*)": "fixed amount ($30, for example) you pay for a covered",
-        "K? *)&35<4; ĶŢŪŨĮ+59*? &362*ķ@5<6&@+59&(5=*9*)": "fixed amount ($30, for example) you pay for a covered",
-        "/4:<9&4(*62&4:&9;56&@": "insurance plan starts to pay",
-        "/4: <9&4(*62&4: &9; 56&@": "insurance plan starts to pay",
-        "/;&ŢŪĮŨŨŨ)*)<(;/'2*Į+59*?&362*Į@5<6&@;*K9:": "With a $2,000 deductible, for example, you pay the first",
-        "/; &ŢŪĮŨŨŨ)*)<(; /'2*Į+59*? &362*Į@5<6&@; *K 9:": "With a $2,000 deductible, for example, you pay the first",
-        "*?6*4:*:/4(2<)*/4:<9&4(*(56&@3*4;&4))*)<(;/'2*:Į7<&2/K*)69*:(9/6;/54": "expenses include insurance copayment and deductibles, qualified prescription",
-        "*? 6*4: *: /4(2<)*/4: <9&4(*(56&@3*4; &4))*)<(; /'2*: Į7<&2/K*)69*: (9/6; /54": "expenses include insurance copayment and deductibles, qualified prescription",
-        "/4:<9&4(*62&45R*9/4,69*:(9/6;/54)9<,'*4*K;ĭ2:5(&22*)&)9<,2/:": "insurance plan offering prescription drug benefit. Also called a drug list",
-        "354*@54&69*;&?'&:/:56&@+597<&2/K*)3*)/(&2*?6*4:*:&2:5&9*;&?Ŀ+9**": "money on a pre-tax basis to pay for qualified medical expenses",
-        "354*@54&69*; &?'&: /: 56&@+597<&2/K*)3*)/(&2*? 6*4: *: ĭ@<: /4, <4; &? *)": "money on a pre-tax basis to pay for qualified medical expenses",
-        "'*4*K;": "benefit",
-        "benefits:": "benefits",
-        "6&@+59: 6*(/K(. *&2;'/22: &4), *; *; &? &)=&4; &, *ĭ": "pay for specific health bills and get the tax advantage.",
-        "health care services": "health care services",
-        "tax-freeĭ": "tax-free.",
-        
-        # Previous replacements
-        "enrollmentm ent": 'enrollment',
-        "si nto": 'into',
-        "ent period": 'ent period',
-        "rom": 'from',
-        "nexpected": 'unexpected',
-        "atno": 'at no',
-        "bya": 'by a',
-        "toa": 'to a',
-        "thi si": 'this',
-        "hardship withdrawals rom": 'hardship withdrawals from',
-        "enrollmentees": 'enrollments',
-        "decisionsabout": 'decisions about',
-        " from ": 'from',
-        " uunexpected ": 'unexpected',
-        "why weve": 'why we\'ve',
-        "Thanks to": 'Thanks to',
-        "onethird": 'one-third',
-        "sazs ga": '',
-        "aoto boof": '60% to 80% of',
-        "soto boof": '50% to 60% of',
-        "boo day[s]?": '90 days',
-        "go days": '90 days',
-        "ga ss": '',
-        "sz a": '',
-        "DISABILILTY": 'DISABILITY',
-        
-        # Common patterns in health insurance documents
-        "out-of-pocket maximumcosts": "out-of-pocket costs",
-        "out-of-pocket maximummedical": "out-of-pocket medical",
-        "in-network": "in-network",
-        "out-of-network": "out-of-network",
-        "HSA (Health Savings Account)": "HSA",
-        "FSA (Flexible Spending Account)": "FSA",
-    }
+    # Final cleanups
+    markdown_text = markdown_text.replace("## ## Page", "## Page")
     
-    for pattern, replacement in specific_replacements.items():
-        markdown_text = markdown_text.replace(pattern, replacement)
-    
-    # Remove non-printing characters and control characters
-    markdown_text = re.sub(r'[\x00-\x1F\x7F-\x9F]', '', markdown_text)
-    
-    # Fix common markdown formatting issues
-    markdown_text = re.sub(r'\*{2,}', '**', markdown_text)  # Fix multiple asterisks
-    markdown_text = re.sub(r'(#{1,6})([^ ])', r'\1 \2', markdown_text)  # Fix missing space after header markers
-    
-    # Collapse multiple blank lines
-    markdown_text = re.sub(r'\n{3,}', '\n\n', markdown_text)
-    
-    return markdown_text.strip()
+    return markdown_text
 
 def aggressive_clean_text(text):
     """
@@ -674,8 +622,8 @@ def aggressive_clean_text(text):
     text = text.replace("5S(*", "office")
     text = text.replace("9*= )", "review")
     text = text.replace("5<;Ŀ5+Ŀ65(1*;3&?/3<3", "out-of-pocket maximum")
-    text = text.replace("2;.&=in,:((5<4;", "Health Savings Accounts")
-    text = text.replace("9*:52 on:;5", "resolutions to")
+    text = text.replace("2;. &=in,:((5<4;", "Health Savings Accounts")
+    text = text.replace("9*:52<;/54:;5", "resolutions to")
     text = text.replace("?695+*::/on&2", "tax professional")
     text = text.replace(":6*(/K(: at/on", "specific situation")
     
@@ -696,21 +644,35 @@ def aggressive_clean_text(text):
     text = text.replace("3<(.", "much")
     text = text.replace("2551", "look")
     text = text.replace(".*26", "help")
-    text = text.replace("3&1*", "make")
-    text = text.replace("@5<9", "your")
-    text = text.replace("@*&9", "year")
-    text = text.replace("62&4", "plan")
-    text = text.replace(":<((*::+<2", "successful")
-    text = text.replace("7<&2/K*)", "qualified")
-    text = text.replace("3*)/(&2", "medical")
-    text = text.replace("*?6*4:*:", "expenses")
-    text = text.replace("&((5<4;", "account")
-    text = text.replace("&::<3/4,", "assuming")
-    text = text.replace("54", "on")
-    text = text.replace("/4", "in")
-    text = text.replace("*;':", "Let's")
-    text = text.replace("*;", "et")
-    text = text.replace("&;", "at")
+    text = text.replace("3&)*the", "made the")
+    text = text.replace("'*4*K;:", "benefits")
+    text = text.replace("5<9", "our")
+    text = text.replace(":&4)the", "s and the")
+    text = text.replace(".=*4/+@5 29", "review your")
+    text = text.replace("2;. &=in,:((5<4;", "Health Savings Accounts")
+    text = text.replace("makethemost", "make the most")
+    text = text.replace("your&annual", "your annual")
+    text = text.replace("your'*", "your benefits")
+    text = text.replace("(&4", "can") 
+    text = text.replace("K)*4", "fident")
+    text = text.replace("+", " ")
+    text = text.replace("4*K;", "next")
+    text = text.replace("benefit:", "benefits")
+    text = text.replace("*'551", "help")
+    text = text.replace("):", " is")
+    text = text.replace(";.", "th")
+    text = text.replace("):;", "dist")
+    text = text.replace("5+", "of")
+    text = text.replace("*", "e")
+    text = text.replace("@5<", "you")
+    text = text.replace("LE ADERSHIP", "LEADERSHIP")
+    text = text.replace("FIDELIT Y", "FIDELITY")
+    text = text.replace("* --", "---")
+    text = text.replace("helpyoumakemore", "help you make more")
+    text = text.replace("confidentdecisionsabout", "confident decisions about")
+    text = text.replace("yourbenefit", "your benefit")
+    text = text.replace("makemore", "make more")
+    text = text.replace("review yourselections", "review your selections")
     
     # Fix header duplication
     text = re.sub(r'(THE FIRST YEAR IN AN HSA)\s+\1', r'\1', text)
@@ -1057,50 +1019,98 @@ def clean_single_file(file_path):
         logger.error(f"Error cleaning text file {file_path}: {str(e)}")
         return {"success": False, "error": str(e)}
 
-def binary_clean_content(content):
+def fixed_binary_clean(text):
     """
-    Clean binary and control characters from content.
-    
-    This function targets specific issues common in PDF extraction:
-    1. Removes non-printable and control characters that can corrupt markdown
-    2. Collapses multiple spaces into a single space while preserving markdown spacing
-    3. Handles UTF-8 encoding issues and replaces invalid characters
-    4. Preserves essential whitespace in markdown formatting (lists, code blocks)
-    5. Removes zero-width spaces and other invisible characters
+    A fixed version of binary_clean_content with proper syntax.
+    Cleans binary and control characters from content.
     
     Args:
-        content (str): The text content to clean
+        text (str): The text content to clean
         
     Returns:
         str: Cleaned content with binary and control characters removed
     """
-    if not content:
+    if not text:
         return ""
     
-    # Remove control characters while preserving newlines and tabs (important for markdown)
-    # This handles ASCII control chars (0x00-0x1F) except \n, \r, \t
+    # Remove control characters while preserving newlines and tabs
     pattern = r'[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]'
-    content = re.sub(pattern, '', content)
+    text = re.sub(pattern, '', text)
     
-    # Clean Unicode control characters and special invisible characters
-    # This includes zero-width spaces, joiners, non-joiners, direction marks
+    # Clean Unicode control characters
     pattern = r'[\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF]'
-    content = re.sub(pattern, '', content)
+    text = re.sub(pattern, '', text)
     
     # Replace common UTF-8 corruption patterns
-    # These often appear when PDF encoding is damaged
-    content = re.sub(r'�+', ' ', content)  # Replace replacement character sequences
+    text = re.sub(r'�+', ' ', text)
     
-    # Normalize whitespace while preserving markdown formatting
-    # We need to be careful not to break indentation for lists or code blocks
-    content = re.sub(r' {2,}', ' ', content)  # Collapse multiple spaces
+    # More aggressive cleaning for garbage patterns
+    text = re.sub(r'[^\w\s.,;:!?()#*\-\[\]/"\']{3,}', ' ', text)
     
-    # Fix broken markdown formatting that might have resulted from binary cleaning
-    # Ensure spaces after list markers and headers
-    content = re.sub(r'(^|\n)([*+-]) (\S)', r'\1\2 \3', content)  # Fix list items
-    content = re.sub(r'(^|\n)(#+)(\S)', r'\1\2 \3', content)  # Fix headers
+    # Remove specific garbage patterns
+    garbage_patterns = {
+        '5>;53&1*;': ' ',
+        '.*5+@5<9&44<&2': ' ',
+        "'*4*K;.*495223*4;": ' ',
+        "495223*4;": ' ',
+        "56 on:intheyear&": ' ',
+        "44 24": ' ',
+        "(.5/(*::5@5<": ' ',
+        "35:;5+your": 'most of your',
+        "*4*K;": 'benefit',
+        "\/9*": ' ',
+        "359*(on K)*4;": 'more confident',
+        ")@.&=*": ' '
+    }
     
-    return content
+    for pattern, replacement in garbage_patterns.items():
+        text = text.replace(pattern, replacement)
+    
+    # Normalize whitespace
+    text = re.sub(r' {2,}', ' ', text)
+    
+    # Fix markdown formatting 
+    text = re.sub(r'(^|\n)([*+-]) (\S)', r'\1\2 \3', text)
+    text = re.sub(r'(^|\n)(#+)(\S)', r'\1\2 \3', text)
+    
+    # Common word replacements
+    replacements = {
+        "annual enrollment": "annual enrollment",
+        "benefit": "benefit",
+        "insurance": "insurance",
+        "health": "health",
+        "enrollment": "enrollment",
+        "guidebook": "guidebook",
+        "choices": "choices",
+        "options": "options",
+        
+        # Common problem patterns
+        ":&4)the": "s and the",
+        ".=*4/+@5 29": "review your",
+        "2;. &=in,:((5<4;": "Health Savings Accounts",
+        "makethemost": "make the most",
+        "your&annual": "your annual",
+        "your'*": "your benefits",
+        "(&4": "can",
+        "K)*4": "fident",
+        "+": " ",
+        "4*K;": "next",
+        "benefit:": "benefits",
+        "*'551": "help",
+        ")": "e",
+        ";.": "th",
+        "):;": "dist",
+        "5+": "of",
+        "*": "e",
+        "@5<": "you",
+        "LE ADERSHIP": "LEADERSHIP",
+        "FIDELIT Y": "FIDELITY"
+    }
+    
+    for pattern, replacement in replacements.items():
+        text = text.replace(pattern, replacement)
+    
+    return text
 
 def ensure_valid_markdown(content):
     """
@@ -1169,70 +1179,184 @@ def ensure_valid_markdown(content):
 def two_pass_markdown_cleanup(file_path):
     """
     Perform a two-pass cleanup on a markdown file to ensure it's clean and valid.
-    First pass removes binary content, second pass validates markdown structure.
+    
+    First pass: Remove binary content
+    Second pass: Ensure valid markdown
     
     Args:
-        file_path (str): Path to the markdown file
+        file_path (str): Path to the markdown file to clean
         
     Returns:
-        bool: True if cleanup was successful
+        bool: True if cleanup was successful, False otherwise
     """
     try:
-        # Create a backup if it doesn't exist
-        backup_file = file_path + '.bak'
-        if not os.path.exists(backup_file):
-            shutil.copy2(file_path, backup_file)
-            logger.info(f"Created backup of {file_path} at {backup_file}")
-        
-        # Read file content
         with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
             content = f.read()
-        
-        if not content:
-            logger.warning(f"File {file_path} is empty or could not be read")
-            return False
-        
-        # First pass: Apply binary cleaning
-        cleaned_content = binary_clean_content(content)
-        
-        # Apply markdown-specific cleaning
-        cleaned_content = ultra_deep_clean_markdown(cleaned_content)
+            
+        # Store original content in case cleaning removes too much
+        original_content = content
+            
+        # First pass: Remove binary content
+        content = fixed_binary_clean(content)
         
         # Second pass: Ensure valid markdown
-        validated_content = ensure_valid_markdown(cleaned_content)
+        content = ensure_valid_markdown(content)
         
-        # Write the cleaned content back to the file
+        # Check if content is empty or significantly reduced after cleaning
+        if not content.strip() or len(content) < 0.1 * len(original_content):
+            logger.warning(f"Cleaning removed too much content from {file_path}, reverting to simple cleaning")
+            # Apply simpler cleaning that preserves more content
+            content = simple_clean_markdown(original_content)
+            
+        # Create backup of original file
+        backup_file = file_path + '.bak'
+        shutil.copy2(file_path, backup_file)
+        logger.info(f"Created backup of {file_path} at {backup_file}")
+        
+        # Write cleaned content back to file
         with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(validated_content)
-        
+            f.write(content)
+            
         return True
     except Exception as e:
         logger.error(f"Error in two-pass cleanup for {file_path}: {str(e)}")
         return False
-
-def read_file_safely(file_path):
+        
+def simple_clean_markdown(content):
     """
-    Read a file with multiple fallback methods to handle encoding issues.
+    Perform a simpler, less aggressive cleaning on markdown content
+    to preserve more of the original text while still removing garbage.
     
     Args:
-        file_path (str): Path to the file to read
+        content (str): The markdown content to clean
         
     Returns:
-        str: File content or empty string on failure
+        str: Cleaned markdown content
     """
-    try:
-        # Try UTF-8 with replacement first
-        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
-            return f.read()
-    except Exception as e:
-        logger.error(f"Error reading file with UTF-8: {str(e)}")
-        try:
-            # Try binary mode as a fallback
-            with open(file_path, 'rb') as f:
-                return f.read().decode('utf-8', errors='replace')
-        except Exception as e:
-            logger.error(f"Error reading file in binary mode: {str(e)}")
-            return ""
+    if not content:
+        return ""
+        
+    # Remove control characters
+    content = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', content)
+    
+    # Fix duplicate headers first (e.g., # # Page)
+    content = re.sub(r'# # Page', '## Page', content)
+    
+    # Remove lines that are primarily garbage
+    cleaned_lines = []
+    for line in content.split('\n'):
+        # Skip lines with very high percentage of special characters
+        special_char_count = sum(1 for c in line if not (c.isalnum() or c.isspace() or c in '.,;:!?()-#*[]'))
+        if len(line.strip()) > 0:
+            special_char_pct = special_char_count / len(line)
+            if special_char_pct >= 0.3 and len(line.strip()) > 5:
+                continue
+        cleaned_lines.append(line)
+    
+    content = '\n'.join(cleaned_lines)
+    
+    # Remove specific garbage patterns common in PDFs
+    garbage_patterns = {
+        # Common patterns in AEGuidebook
+        "5>;53&1": "optimal",
+        "@5<": "you",
+        "*4*K;": "benefit",
+        "44 2": "annual",
+        "495223*4;": "enrollment",
+        "benefit:*": "benefits",
+        "&'5": "about",
+        "(.5/(*:": "choices",
+        "35:;5+": "most of",
+        "'*(": "become",
+        "(on K)*4": "confident",
+        "):": " is",
+        ")*(/:/on:": "decisions",
+        "make:<9*": "make sure",
+        "thatthe @'9*": "that they're",
+        ":*2*( on:": "selections",
+        "&44 2": "annual",
+        "59*=/: ": "review ",
+        "(.year;5 ": "each year to ",
+        ")@.&=*": "already have",
+        "25(at/on": "location",
+        "+&3/2@": "family",
+        "59 ": "or ",
+        "et 5": "to ",
+        "&)0<:;": "adjust",
+        "enrollm ent": "enrollment",
+        "thi s": "this",
+        "':,55);": "it's good to",
+        "&4): ": "and ",
+        "5< '=*": "you've",
+        "+59 ": "for ",
+        "Healthbenefit": "Health benefit",
+        "@5 2/,/'2": "you eligible",
+        "consult&4 at;594": "consult an attorney",
+        "9*,&9)in,": "regarding",
+        "yourspecific": "your specific",
+        "&:(.&4,*:": "as changes",
+        "'*:;": "best",
+        "inyour": "in your",
+        "3&)*the": "made the",
+        "'*4*K;:": "benefits",
+        "5<9": "our",
+        ":&4)the": "s and the",
+        ".=*4/+@5 29": "review your",
+        "2;. &=in,:((5<4;:": "Health Savings Accounts",
+        "makethemost": "make the most",
+        "your&annual": "your annual",
+        "your'*": "your benefits",
+        "(&4": "can",
+        "K)*4": "fident",
+        "+": " ",
+        "4*K;": "next",
+        "benefit:": "benefits",
+        "*'551": "help",
+        "LE ADERSHIP": "LEADERSHIP",
+        "FIDELIT Y": "FIDELITY"
+    }
+    
+    # Apply garbage pattern replacements - multiple passes
+    for _ in range(3):  # Apply up to 3 passes to catch nested patterns
+        for pattern, replacement in garbage_patterns.items():
+            content = content.replace(pattern, replacement)
+    
+    # Fix markdown formatting
+    content = re.sub(r'#{1,6}\s+', lambda m: m.group(0).strip() + ' ', content)  # Fix header formatting
+    content = re.sub(r'\*\*\s+([^*]+)\s+\*\*', r'**\1**', content)  # Fix bold formatting
+    content = re.sub(r'\*\s+([^*]+)\s+\*', r'*\1*', content)  # Fix italic formatting
+    
+    # Collapse multiple blank lines
+    content = re.sub(r'\n{3,}', '\n\n', content)
+    
+    # Clean up page headers and horizontal rules
+    lines = content.split('\n')
+    clean_lines = []
+    
+    for i in range(len(lines)):
+        # Convert "## Page X" to "## Page X" with proper formatting
+        if re.match(r'##\s*Page\s+\d+\s*$', lines[i]):
+            page_num = re.search(r'(\d+)', lines[i]).group(1)
+            clean_lines.append(f"## Page {page_num}")
+        # Replace "* --" with proper horizontal rule
+        elif lines[i].strip() == "* --":
+            clean_lines.append("---")
+        # Convert single-digit page number at start of line to a header
+        elif re.match(r'^\s*\d+\s*$', lines[i]) and i+1 < len(lines) and "ANNUAL ENROLLMENT" in lines[i+1]:
+            page_num = lines[i].strip()
+            clean_lines.append(f"## Page {page_num}")
+            # Skip the next line if it's just a page number
+            if i+1 < len(lines) and re.match(r'^\s*\d+\s*$', lines[i+1]):
+                i += 1
+        else:
+            clean_lines.append(lines[i])
+    
+    content = '\n'.join(clean_lines)
+    
+    # Fix common markdown issues
+    content = content.replace("## ## Page", "## Page")
+    
+    return content
 
 def enhanced_clean_markdown_files(directory_path):
     """
@@ -1260,3 +1384,79 @@ def enhanced_clean_markdown_files(directory_path):
     
     logger.info(f"Enhanced cleaning completed for {file_count} markdown files")
     return file_count
+
+def deep_clean_markdown(text):
+    """
+    Apply deeper cleaning to markdown text, preserving markdown formatting.
+    
+    Args:
+        text (str): The markdown text to clean
+        
+    Returns:
+        str: Cleaned markdown text
+    """
+    if not text:
+        return ""
+        
+    # First apply basic cleaning but preserve markdown
+    text = basic_clean_text(text)
+    
+    # Process line by line to better preserve markdown formatting
+    lines = text.split('\n')
+    cleaned_lines = []
+    
+    for line in lines:
+        # Skip markdown table separator lines (---|---) or header lines with multiple pipes
+        if re.match(r'^\s*[\-\|]+\s*$', line) or line.count('|') > 1:
+            cleaned_lines.append(line)
+            continue
+            
+        # Detect and fix common section headers from benefits guides
+        header_patterns = {
+            r'(?i).*\bANNUAL\s*ENROLLMENT\s*GUIDEBOOK.*': '# ANNUAL ENROLLMENT GUIDEBOOK',
+            r'(?i).*\bHEALTH\s*INSURANCE\s*PLAN.*': '## HEALTH INSURANCE PLAN',
+            r'(?i).*\bDISABILITY\s*INSURANCE.*': '## DISABILITY INSURANCE',
+            r'(?i).*\bHEALTH\s*BENEFIT\s*ACCOUNTS.*': '## HEALTH BENEFIT ACCOUNTS',
+            r'(?i).*\bDENTAL\s*AND\s*VISION.*': '## DENTAL AND VISION',
+            r'(?i).*\bSUPPLEMENTAL\s*BENEFITS.*': '## SUPPLEMENTAL BENEFITS',
+            r'(?i).*\bWHAT\s*YOU\s*NEED\s*TO\s*KNOW.*': '## WHAT YOU NEED TO KNOW',
+            r'(?i).*\bTABLE\s*OF\s*CONTENTS.*': '## Table of Contents',
+            r'(?i).*\bDID\s*YOU\s*KNOW.*': '### DID YOU KNOW',
+        }
+        
+        matched = False
+        for pattern, replacement in header_patterns.items():
+            if re.match(pattern, line):
+                cleaned_lines.append(replacement)
+                matched = True
+                break
+                
+        if matched:
+            continue
+
+        # Apply known replacements for specific patterns
+        line = line.replace("K? *)&35<4;", "fixed amount")
+        line = line.replace("/4: <9&4(*62&4: &9; 56&@", "insurance plan starts to pay")
+        line = line.replace("your*ben*fit:", "your benefits")
+        line = line.replace("benefit:", "benefits")
+        line = line.replace("makethemost", "make the most")
+        line = line.replace("your&annual", "your annual")
+        line = line.replace("yourbenef", "your benefits")
+        line = line.replace("can", "can")
+        line = line.replace("fident", "fident")
+        line = line.replace("next", "next")
+        
+        # Add cleaned line
+        cleaned_lines.append(line)
+    
+    text = '\n'.join(cleaned_lines)
+    
+    # Fix markdown-specific formatting issues
+    text = re.sub(r'#{1,6}\s+', lambda m: m.group(0).strip() + ' ', text)  # Fix header formatting
+    text = re.sub(r'\*\*\s+([^*]+)\s+\*\*', r'**\1**', text)  # Fix bold formatting
+    text = re.sub(r'\*\s+([^*]+)\s+\*', r'*\1*', text)  # Fix italic formatting
+    
+    # Collapse multiple blank lines
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    
+    return text.strip()

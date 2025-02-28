@@ -13,12 +13,12 @@ import sys
 from pdf_processor.utils.filesystem import delete_outputs, ensure_directory
 from pdf_processor.extractors.text_extractor import extract_text_from_pdf
 from pdf_processor.extractors.table_extractor import extract_tables
-from pdf_processor.converters.enhanced_markdown import convert_to_enhanced_markdown
+from pdf_processor.converters.enhanced_markdown import convert_to_enhanced_markdown, post_process_markdown
 from pdf_processor.utils.cleaning import (
     clean_text_files, clean_markdown_files, clean_table_files,
     deep_clean_text, ultra_deep_clean_text, deep_clean_markdown, 
     ultra_deep_clean_markdown, enhanced_fix_text, enhanced_clean_markdown_files,
-    binary_clean_content, ensure_valid_markdown, two_pass_markdown_cleanup
+    fixed_binary_clean as binary_clean_content, ensure_valid_markdown, two_pass_markdown_cleanup
 )
 from pdf_processor.config import (
     OUTPUT_DIR, ENHANCED_MARKDOWN_DIR, TEXT_DIR, TABLES_DIR
@@ -132,6 +132,8 @@ def process_pdf(pdf_path, options=None):
     # Convert to enhanced markdown (always done)
     logger.info(f"Converting {pdf_filename} to enhanced markdown")
     enhanced_markdown_result = convert_to_enhanced_markdown(pdf_path)
+    if enhanced_markdown_result["success"]:
+        post_process_markdown(enhanced_markdown_result["output_file"])
     results['enhanced_markdown'] = enhanced_markdown_result
     
     # Apply enhanced cleaning to markdown files - Use the new enhanced cleaning process
