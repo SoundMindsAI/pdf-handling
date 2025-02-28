@@ -1445,6 +1445,7 @@ def deep_clean_markdown(text):
         line = line.replace("can", "can")
         line = line.replace("fident", "fident")
         line = line.replace("next", "next")
+        line = line.replace("2;. &=in,:((5<4;", "Health Savings Accounts")
         
         # Add cleaned line
         cleaned_lines.append(line)
