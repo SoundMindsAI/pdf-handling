@@ -5,6 +5,7 @@ This document provides detailed diagrams explaining the process of converting PD
 ## High-Level Architecture
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontWeight': 'bold', 'primaryTextColor': '#000000' }}}%%
 graph TD
     subgraph Input
         PDF[PDF Document]
@@ -38,10 +39,10 @@ graph TD
     FieldModule --> Basic
     FieldModule --> Advanced
     
-    classDef input fill:#f9f,stroke:#333,stroke-width:2px;
-    classDef parser fill:#bbf,stroke:#333,stroke-width:2px;
-    classDef process fill:#bfb,stroke:#333,stroke-width:2px;
-    classDef output fill:#fbb,stroke:#333,stroke-width:2px;
+    classDef input fill:#f9f,stroke:#333,stroke-width:2px,color:#000,font-weight:bold,font-size:14px;
+    classDef parser fill:#bbf,stroke:#333,stroke-width:2px,color:#000,font-weight:bold,font-size:14px;
+    classDef process fill:#bfb,stroke:#333,stroke-width:2px,color:#000,font-weight:bold,font-size:14px;
+    classDef output fill:#fbb,stroke:#333,stroke-width:2px,color:#000,font-weight:bold,font-size:14px;
     
     class PDF input;
     class Camelot,PyPDF parser;
@@ -52,6 +53,7 @@ graph TD
 ## Data Transformation Pipeline
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontWeight': 'bold', 'primaryTextColor': '#000000' }}}%%
 flowchart LR
     subgraph "PDF Document"
         RawPDF[Raw PDF Content]
@@ -91,11 +93,14 @@ flowchart LR
     KeyValuePairs --> FormattedFields
     
     FormattedFields --> Markdown
+    
+    classDef default color:#000,font-weight:bold,font-size:14px;
 ```
 
 ## PDF Parsing Strategy
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontWeight': 'bold', 'primaryTextColor': '#000000' }}}%%
 flowchart TD
     Start[Start] --> ReadPDF[Read PDF File]
     ReadPDF --> ExtractComponents[Extract Components]
@@ -115,21 +120,27 @@ flowchart TD
     ExtractFields --> FormatMarkdown[Format as Markdown]
     FormatMarkdown --> WriteOutput[Write to Output File]
     WriteOutput --> End[End]
+    
+    classDef default color:#000,font-weight:bold,font-size:14px;
 ```
 
 ## Text Cleaning Process
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontWeight': 'bold', 'primaryTextColor': '#000000' }}}%%
 flowchart LR
     RawText[Raw Extracted Text] --> RemoveCID[Remove CID Patterns]
     RemoveCID --> FixEncoding[Fix Encoding Issues]
     FixEncoding --> NormalizeWhitespace[Normalize Whitespace]
     NormalizeWhitespace --> CleanText[Cleaned Text]
+    
+    classDef default color:#000,font-weight:bold,font-size:14px;
 ```
 
 ## Section Detection Process
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontWeight': 'bold', 'primaryTextColor': '#000000' }}}%%
 stateDiagram-v2
     [*] --> FullText
     FullText --> SectionIdentification: Identify Known Section Titles
@@ -146,11 +157,14 @@ stateDiagram-v2
     PatternDetection --> SubsectionExtraction
     
     SubsectionExtraction --> [*]
+    
+    classDef default color:#000,font-weight:bold,font-size:14px;
 ```
 
 ## Field Extraction Process
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontWeight': 'bold', 'primaryTextColor': '#000000' }}}%%
 flowchart TD
     Start[Start Field Extraction] --> LoadPatterns[Load Field Patterns]
     LoadPatterns --> ProcessContent[Process Content]
@@ -167,11 +181,14 @@ flowchart TD
     
     CreatePairs --> FormatFields[Format as Markdown Fields]
     FormatFields --> End[End Field Extraction]
+    
+    classDef default color:#000,font-weight:bold,font-size:14px;
 ```
 
 ## Comparison of PDF Parsing Methods
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontWeight': 'bold', 'primaryTextColor': '#000000' }}}%%
 graph TD
     subgraph "Pipeline Orchestration (pdf_processor.pipeline)"
         P1[Process PDF] --> P2[Ensure Output Directories]
@@ -203,11 +220,11 @@ graph TD
         I4 --> I5[Generate Enhanced Markdown]
     end
     
-    classDef pipeline fill:#ffcccc,stroke:#333,stroke-width:1px;
-    classDef text fill:#ccffcc,stroke:#333,stroke-width:1px;
-    classDef table fill:#ccccff,stroke:#333,stroke-width:1px;
-    classDef cleaning fill:#ffffcc,stroke:#333,stroke-width:1px;
-    classDef enhanced fill:#ffccff,stroke:#333,stroke-width:1px;
+    classDef pipeline fill:#ffcccc,stroke:#333,stroke-width:1px,color:#000,font-weight:bold,font-size:14px;
+    classDef text fill:#ccffcc,stroke:#333,stroke-width:1px,color:#000,font-weight:bold,font-size:14px;
+    classDef table fill:#ccccff,stroke:#333,stroke-width:1px,color:#000,font-weight:bold,font-size:14px;
+    classDef cleaning fill:#ffffcc,stroke:#333,stroke-width:1px,color:#000,font-weight:bold,font-size:14px;
+    classDef enhanced fill:#ffccff,stroke:#333,stroke-width:1px,color:#000,font-weight:bold,font-size:14px;
     
     class P1,P2,P3,P4,P5 pipeline;
     class T1,T2,T3 text;

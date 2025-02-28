@@ -15,6 +15,7 @@ import glob
 from pathlib import Path
 from pdf_processor.utils.logging import configure_logging
 from pdf_processor.pipeline import process_pdf
+from pdf_processor.utils.ghostscript_setup import setup_ghostscript
 
 
 def main():
@@ -45,6 +46,9 @@ def main():
     configure_logging(console_level=log_level)
     
     logger = logging.getLogger(__name__)
+    
+    # Setup Ghostscript for table extraction
+    setup_ghostscript()
     
     # If no PDF paths are provided, use all PDFs in data/sourcedocs
     pdf_paths = args.pdf_paths

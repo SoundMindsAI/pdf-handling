@@ -20,6 +20,8 @@ Our mandatory cleaning process now includes:
 2. **Pattern-Based Replacements**: Second pass fixes common garbled text patterns
 3. **Document-Specific Fixes**: Third pass applies document-specific fixes 
 4. **Final Cleanup**: An additional comprehensive cleanup is applied to all output files
+5. **Two-Pass Verification**: A secondary verification pass ensures no corruption remains
+6. **Markdown Structure Validation**: Special checks ensure proper markdown formatting
 
 To run the PDF processor (which now always includes maximum cleaning):
 
@@ -27,29 +29,98 @@ To run the PDF processor (which now always includes maximum cleaning):
 python -m pdf_processor ./path/to/your/pdf.pdf
 ```
 
+## New Enhanced Cleaning Features
+
+### Binary Content Detection and Removal
+
+The system now performs comprehensive binary content detection and removal:
+
+```python
+def binary_clean_content(content):
+    """
+    Clean binary and control characters from content.
+    
+    This function:
+    1. Removes non-printable and control characters
+    2. Collapses multiple spaces into a single space
+    3. Preserves valid markdown formatting
+    4. Handles UTF-8 encoding issues
+    """
+```
+
+This specialized function targets common PDF extraction issues at the binary level, catching problems that regular text processing might miss.
+
+### Two-Pass Markdown Cleanup
+
+Our enhanced cleanup process now implements a two-pass approach:
+
+1. **First Pass**: Binary content detection and removal
+2. **Second Pass**: Markdown structure validation and correction
+
+```python
+def two_pass_markdown_cleanup(file_path):
+    """
+    Perform a two-pass cleanup on a markdown file to ensure it's clean and valid.
+    First pass removes binary content, second pass validates markdown structure.
+    """
+```
+
+This approach ensures that all markdown files are both free of corruption and properly formatted.
+
+### Enhanced Table Integration
+
+Tables are now intelligently integrated into the markdown content rather than being appended at the end:
+
+```python
+def add_table_references(markdown_content, tables_dir, pdf_path):
+    """
+    Add references to tables extracted from PDF into the markdown content.
+    
+    This function places tables at their logical positions in the document
+    based on references in the original content, rather than appending them
+    at the end.
+    """
+```
+
+This provides a more natural reading experience when tables are referenced within the text.
+
 ## Sanitization Levels
 
-The system provides three levels of text and markdown sanitization, automatically applied in this order:
+For reference, here are the various cleaning functions available in our toolkit:
 
-1. **Basic Sanitization** - Primary cleaning of character encoding issues and common artifacts:
-   - Replaces control characters and non-standard whitespace
-   - Fixes common encoding issues like ISO-8859 characters in UTF-8 text
-   - Removes byte order marks and zero-width characters
-   - Normalizes line endings and spacing
+1. **basic_clean_text()**: Basic cleaning for raw text files
+2. **clean_text()**: Standard cleaning for most text content
+3. **deep_clean_text()**: More aggressive cleaning for problematic content
+4. **deep_clean_markdown()**: Special cleaning that preserves markdown formatting
+5. **ultra_deep_clean_markdown()**: Maximum cleaning that still maintains markdown structure
+6. **binary_clean_content()**: Specialized binary-level content cleaning
+7. **ensure_valid_markdown()**: Structure validation for markdown documents
+8. **two_pass_markdown_cleanup()**: Comprehensive two-stage cleanup process
+9. **enhanced_clean_markdown_files()**: Applies the full enhanced cleaning process to all files in a directory
 
-2. **Deep Cleaning** - More advanced processing:
-   - Applies pattern-based replacements for specific garbled text patterns
-   - Uses intelligent text normalization routines
-   - Fixes common PDF extraction artifacts like word joining
-   - Corrects fragmented sentences and paragraph breaks
+## Example of Sanitization Effects
 
-3. **Ultra-Deep Cleaning** - The most thorough processing:
-   - Applies word-level analysis to detect and fix patterns
-   - Uses hard-coded replacements for known problematic patterns
-   - Performs statistical analysis to identify and fix garbled text
-   - Processes tables and structured content with special handling
+### Before Sanitization
 
-**NOTE: All three levels are always applied by default to provide the maximum improvement in text quality.**
+Text may contain various corruption patterns, including binary characters, control characters, and encoding issues:
+
+```
+Guide￿￿book￿￿￿ow to make￿￿￿￿￿a claim
+```
+
+### After Sanitization
+
+Document-specific patterns are detected and fixed:
+
+```python
+# Apply specific fixes for known garbled patterns
+content = re.sub(r'Guidebook\s+ow\s+to\s+make', 'Guidebook: How to make', content)
+```
+
+Result:
+```
+Guidebook: How to make a claim
+```
 
 ## Simplified Processing Pipeline
 

@@ -17,9 +17,11 @@ import os
 import re
 import glob
 import logging
+import unicodedata
 import string
 from pathlib import Path
 import chardet
+import shutil
 
 logger = logging.getLogger(__name__)
 
@@ -520,7 +522,7 @@ def ultra_deep_clean_markdown(markdown_text):
         "/4:<9&4(*62&45R*9/4,69*:(9/6;/54)9<,'*4*K;ĭ2:5(&22*)&)9<,2/:": "insurance plan offering prescription drug benefit. Also called a drug list",
         "354*@54&69*;&?'&:/:56&@+597<&2/K*)3*)/(&2*?6*4:*:&2:5&9*;&?Ŀ+9**": "money on a pre-tax basis to pay for qualified medical expenses",
         "354*@54&69*; &?'&: /: 56&@+597<&2/K*)3*)/(&2*? 6*4: *: ĭ@<: /4, <4; &? *)": "money on a pre-tax basis to pay for qualified medical expenses",
-        "'*4*K;": "benefits",
+        "'*4*K;": "benefit",
         "benefits:": "benefits",
         "6&@+59: 6*(/K(. *&2;'/22: &4), *; *; &? &)=&4; &, *ĭ": "pay for specific health bills and get the tax advantage.",
         "health care services": "health care services",
@@ -568,49 +570,11 @@ def ultra_deep_clean_markdown(markdown_text):
     # Remove non-printing characters and control characters
     markdown_text = re.sub(r'[\x00-\x1F\x7F-\x9F]', '', markdown_text)
     
-    # Fix common OCR issues with numbers
-    markdown_text = re.sub(r'(\d),(\d)', r'\1\2', markdown_text)  # Fix cases like "1,000" -> "1000"
+    # Fix common markdown formatting issues
+    markdown_text = re.sub(r'\*{2,}', '**', markdown_text)  # Fix multiple asterisks
+    markdown_text = re.sub(r'(#{1,6})([^ ])', r'\1 \2')  # Fix missing space after header markers
     
-    # Fix spacing issues
-    markdown_text = re.sub(r'([a-zA-Z])(\d)', r'\1 \2', markdown_text)  # Add space between letters and numbers
-    markdown_text = re.sub(r'(\d)([a-zA-Z])', r'\1 \2', markdown_text)  # Add space between numbers and letters
-    markdown_text = re.sub(r'\s{2,}', ' ', markdown_text)  # Replace multiple spaces with single space
-    
-    # Normalize whitespace
-    markdown_text = re.sub(r'\s+', ' ', markdown_text)
-    
-    # Remove page number headers (common in PDFs)
-    markdown_text = re.sub(r'\n\s*\d+\s*\n', '\n', markdown_text)
-    
-    # Remove headers/footers (common patterns seen in PDFs)
-    markdown_text = re.sub(r'^\s*Page \d+ of \d+\s*$', '', markdown_text, flags=re.MULTILINE)
-    markdown_text = re.sub(r'^\s*\d+\s*$', '', markdown_text, flags=re.MULTILINE)  # Standalone page numbers
-    
-    # Additional patterns for garbled text in mixed formats
-    # Very specific to AEGuidebook.pdf patterns we've observed
-    known_replacements = {
-        "fffffrom": "from",
-        "theeee": "the",
-        "-ing": "ing",
-        "-ed ": "ed ",
-        "withhhh": "with",
-        "yourrr": "your",
-        ";&?Ŀ+9**": "tax-free",
-        ">&2:5&9*;&?Ŀ+9**": "withdrawals also are tax-free",
-        ">/;)9&>&2:+597<&2/K*)3*)/(&2*?6*4:*:&2:5&9*;&?Ŀ+9**": "withdrawals for qualified medical expenses also are tax-free",
-        "ȖŢŪŭŨȗ": "$250",
-    }
-    
-    for pattern, replacement in known_replacements.items():
-        markdown_text = markdown_text.replace(pattern, replacement)
-    
-    # Fix common punctuation issues
-    markdown_text = re.sub(r'([.,;:!?])\s*([.,;:!?])', r'\1', markdown_text)  # Remove duplicate punctuation
-    
-    # Ensure there's a space after periods, commas, etc. unless followed by a quote or parenthesis
-    markdown_text = re.sub(r'([.,;:!?])([^\s"\')\]])', r'\1 \2', markdown_text)
-    
-    # Collapse multiple line breaks
+    # Collapse multiple blank lines
     markdown_text = re.sub(r'\n{3,}', '\n\n', markdown_text)
     
     return markdown_text.strip()
@@ -650,7 +614,7 @@ def aggressive_clean_text(text):
         text = text.replace("354*@54&69*; &?'&: /: 56&@+597<&2/K*)3*)/(&2*? 6*4: *: ĭ@<: /4, <4; &? *)",
                            "money on a pretax basis to pay for qualified medical expenses. By using untaxed")
         # Fix benefit at the end of page 10
-        text = text.replace("'*4*K; ", "benefit")
+        text = text.replace("'*4*K;", "benefit")
     
     # Replace specific strings on page 11
     if "THE FIRST YEAR IN AN HSA" in text:
@@ -957,7 +921,7 @@ def clean_markdown_files(directory_path):
     for md_file in md_files:
         logger.info(f"Cleaning markdown file: {md_file}")
         try:
-            with open(md_file, 'r', encoding='utf-8', errors='replace') as f:
+            with open(md_file, 'r', encoding='utf-8') as f:
                 content = f.read()
             
             # First, make a backup of the original file
@@ -1023,7 +987,7 @@ def clean_table_files(directory_path):
     for table_file in table_files:
         logger.info(f"Cleaning table file: {table_file}")
         try:
-            with open(table_file, 'r', encoding='utf-8', errors='replace') as f:
+            with open(table_file, 'r', encoding='utf-8') as f:
                 content = f.read()
             
             # Apply cleaning, preserving table markdown
@@ -1093,19 +1057,206 @@ def clean_single_file(file_path):
         logger.error(f"Error cleaning text file {file_path}: {str(e)}")
         return {"success": False, "error": str(e)}
 
-# Main function for testing
-if __name__ == "__main__":
-    import sys
-    import logging
-    logging.basicConfig(level=logging.INFO)
+def binary_clean_content(content):
+    """
+    Clean binary and control characters from content.
     
-    if len(sys.argv) > 1:
-        dir_path = sys.argv[1]
-        if os.path.isdir(dir_path):
-            clean_text_files(dir_path)
-            clean_markdown_files(dir_path)
-            clean_table_files(dir_path)
-        else:
-            print(f"Error: {dir_path} is not a valid directory")
-    else:
-        print("Usage: python cleaning.py <directory_path>")
+    This function targets specific issues common in PDF extraction:
+    1. Removes non-printable and control characters that can corrupt markdown
+    2. Collapses multiple spaces into a single space while preserving markdown spacing
+    3. Handles UTF-8 encoding issues and replaces invalid characters
+    4. Preserves essential whitespace in markdown formatting (lists, code blocks)
+    5. Removes zero-width spaces and other invisible characters
+    
+    Args:
+        content (str): The text content to clean
+        
+    Returns:
+        str: Cleaned content with binary and control characters removed
+    """
+    if not content:
+        return ""
+    
+    # Remove control characters while preserving newlines and tabs (important for markdown)
+    # This handles ASCII control chars (0x00-0x1F) except \n, \r, \t
+    pattern = r'[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]'
+    content = re.sub(pattern, '', content)
+    
+    # Clean Unicode control characters and special invisible characters
+    # This includes zero-width spaces, joiners, non-joiners, direction marks
+    pattern = r'[\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF]'
+    content = re.sub(pattern, '', content)
+    
+    # Replace common UTF-8 corruption patterns
+    # These often appear when PDF encoding is damaged
+    content = re.sub(r'�+', ' ', content)  # Replace replacement character sequences
+    
+    # Normalize whitespace while preserving markdown formatting
+    # We need to be careful not to break indentation for lists or code blocks
+    content = re.sub(r' {2,}', ' ', content)  # Collapse multiple spaces
+    
+    # Fix broken markdown formatting that might have resulted from binary cleaning
+    # Ensure spaces after list markers and headers
+    content = re.sub(r'(^|\n)([*+-]) (\S)', r'\1\2 \3', content)  # Fix list items
+    content = re.sub(r'(^|\n)(#+)(\S)', r'\1\2 \3', content)  # Fix headers
+    
+    return content
+
+def ensure_valid_markdown(content):
+    """
+    Ensure markdown content is properly formatted and valid.
+    
+    This function focuses on structural markdown elements:
+    1. Fixes improperly formatted headers (ensures space after # characters)
+    2. Corrects list formatting (ensures proper spacing in list items)
+    3. Repairs table formatting and alignment
+    4. Ensures proper line breaks before and after block elements
+    5. Normalizes horizontal rules and block quotes
+    
+    Args:
+        content (str): The markdown content to validate and correct
+        
+    Returns:
+        str: Properly formatted markdown content
+    """
+    if not content:
+        return ""
+    
+    # Fix headers - ensure there's a space after the # characters
+    # This is a common issue in extracted markdown from PDFs
+    content = re.sub(r'(^|\n)(#+)([^#\s])', r'\1\2 \3', content, flags=re.MULTILINE)
+    
+    # Ensure proper list formatting
+    # Lists should have a space after the marker (* or - or number.)
+    content = re.sub(r'(^|\n)[*+-]([^\s])', r'\1* \2', content, flags=re.MULTILINE)
+    content = re.sub(r'(^|\n)\d+\.([^\s])', r'\1\d+. \2', content, flags=re.MULTILINE)
+    
+    # Fix table formatting
+    # Tables need proper alignment and spacing
+    lines = content.split('\n')
+    in_table = False
+    table_start_index = -1
+    
+    for i, line in enumerate(lines):
+        # Detect table header row
+        if re.match(r'\|.*\|', line) and i + 1 < len(lines) and re.match(r'\|[\s-:]*\|', lines[i+1]):
+            in_table = True
+            table_start_index = i
+        
+        # End of table detection
+        elif in_table and not re.match(r'\|.*\|', line):
+            in_table = False
+            
+            # Add proper spacing before and after table
+            if table_start_index > 0 and not lines[table_start_index-1].strip() == '':
+                lines[table_start_index] = '\n' + lines[table_start_index]
+            if i > 0 and not line.strip() == '':
+                lines[i] = '\n' + line
+    
+    content = '\n'.join(lines)
+    
+    # Ensure proper spacing after headers
+    content = re.sub(r'(^|\n)(#+.*?)(\n[^#\n])', r'\1\2\n\3', content, flags=re.MULTILINE)
+    
+    # Fix broken horizontal rules
+    content = re.sub(r'(^|\n)(\*\*\*+|\-\-\-+|___+)(\S)', r'\1\2\n\3', content, flags=re.MULTILINE)
+    
+    # Fix blockquotes - ensure space after >
+    content = re.sub(r'(^|\n)>([^\s])', r'\1> \2', content, flags=re.MULTILINE)
+    
+    return content
+
+def two_pass_markdown_cleanup(file_path):
+    """
+    Perform a two-pass cleanup on a markdown file to ensure it's clean and valid.
+    First pass removes binary content, second pass validates markdown structure.
+    
+    Args:
+        file_path (str): Path to the markdown file
+        
+    Returns:
+        bool: True if cleanup was successful
+    """
+    try:
+        # Create a backup if it doesn't exist
+        backup_file = file_path + '.bak'
+        if not os.path.exists(backup_file):
+            shutil.copy2(file_path, backup_file)
+            logger.info(f"Created backup of {file_path} at {backup_file}")
+        
+        # Read file content
+        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+            content = f.read()
+        
+        if not content:
+            logger.warning(f"File {file_path} is empty or could not be read")
+            return False
+        
+        # First pass: Apply binary cleaning
+        cleaned_content = binary_clean_content(content)
+        
+        # Apply markdown-specific cleaning
+        cleaned_content = ultra_deep_clean_markdown(cleaned_content)
+        
+        # Second pass: Ensure valid markdown
+        validated_content = ensure_valid_markdown(cleaned_content)
+        
+        # Write the cleaned content back to the file
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(validated_content)
+        
+        return True
+    except Exception as e:
+        logger.error(f"Error in two-pass cleanup for {file_path}: {str(e)}")
+        return False
+
+def read_file_safely(file_path):
+    """
+    Read a file with multiple fallback methods to handle encoding issues.
+    
+    Args:
+        file_path (str): Path to the file to read
+        
+    Returns:
+        str: File content or empty string on failure
+    """
+    try:
+        # Try UTF-8 with replacement first
+        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+            return f.read()
+    except Exception as e:
+        logger.error(f"Error reading file with UTF-8: {str(e)}")
+        try:
+            # Try binary mode as a fallback
+            with open(file_path, 'rb') as f:
+                return f.read().decode('utf-8', errors='replace')
+        except Exception as e:
+            logger.error(f"Error reading file in binary mode: {str(e)}")
+            return ""
+
+def enhanced_clean_markdown_files(directory_path):
+    """
+    Apply the enhanced two-pass cleaning to all markdown files in a directory.
+    
+    Args:
+        directory_path (str): Path to directory containing markdown files
+        
+    Returns:
+        int: Number of files cleaned
+    """
+    logger.info(f"Enhanced cleaning of markdown files in {directory_path}")
+    
+    if not os.path.exists(directory_path):
+        logger.warning(f"Directory does not exist: {directory_path}")
+        return 0
+    
+    file_count = 0
+    md_files = glob.glob(os.path.join(directory_path, "*.md"))
+    
+    for md_file in md_files:
+        logger.info(f"Performing enhanced cleaning on markdown file: {md_file}")
+        if two_pass_markdown_cleanup(md_file):
+            file_count += 1
+    
+    logger.info(f"Enhanced cleaning completed for {file_count} markdown files")
+    return file_count

@@ -9,9 +9,13 @@ structured markdown files for easy viewing and further processing.
 import os
 import re
 import argparse
-import camelot
+import logging
 from pathlib import Path
 
+# Set the GS_PATH environment variable for Ghostscript
+os.environ['GS_PATH'] = '/usr/local/bin/gs'
+
+import camelot
 from pdf_processor.config import DEFAULT_PDF_PATH, TABLES_DIR
 from pdf_processor.utils.logging import configure_logging, get_logger
 

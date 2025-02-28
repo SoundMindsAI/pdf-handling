@@ -12,10 +12,11 @@ import argparse
 from pathlib import Path
 import glob
 from contextlib import suppress
+import sys
 
 from pdf_processor.config import DEFAULT_PDF_PATH, TEXT_DIR, TABLES_DIR, ENHANCED_MARKDOWN_DIR
 from pdf_processor.utils.logging import configure_logging, get_logger
-from pdf_processor.utils.cleaning import basic_clean_text, aggressive_clean_text
+from pdf_processor.utils.cleaning import basic_clean_text, aggressive_clean_text, binary_clean_content
 
 # Get logger for this module
 logger = get_logger(__name__)
@@ -179,103 +180,202 @@ def extract_tables_for_document(pdf_name):
     return sorted(table_files)
 
 
-def add_table_references(pdf_name, output_file):
+def add_table_references(markdown_content, tables_dir, pdf_path):
     """
-    Add references to extracted tables in the markdown file.
+    Add references to tables in the markdown content.
     
     Args:
-        pdf_name (str): Base name of the PDF
-        output_file (str): Path to the output markdown file
+        markdown_content (str): The markdown content
+        tables_dir (str): Directory where table files are stored
+        pdf_path (str): Path to the PDF file
         
     Returns:
-        str: Path to the updated markdown file
+        str: Markdown content with table references
     """
-    # Find all table files for this PDF
-    tables_dir = Path(TABLES_DIR)
+    if not os.path.exists(tables_dir):
+        return markdown_content
     
-    # Use glob pattern to find both lattice and stream tables
-    with suppress(Exception):
-        table_files = sorted([f for f in tables_dir.glob(f"{pdf_name}_*.md")])
+    # List all table files for this PDF
+    pdf_basename = os.path.basename(pdf_path).replace('.pdf', '')
+    table_files = []
+    for f in os.listdir(tables_dir):
+        if f.startswith(f"{pdf_basename}_table_") and f.endswith(".md"):
+            table_files.append(os.path.join(tables_dir, f))
     
     if not table_files:
-        return output_file
+        return markdown_content
     
-    # Determine if we need to open the file or use the provided file object
-    close_file = False
-    output = None
+    logger.info(f"Found {len(table_files)} table files to integrate")
     
-    try:
-        # Read the entire file content
-        with open(output_file, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        # Add each table reference to the end of the file
-        for table_file in table_files:
-            table_name = table_file.name.replace('.md', '')
+    # Sort table files by page number
+    def get_page_num(file_path):
+        # Extract page number from filename (e.g., file_table_page_5.md)
+        match = re.search(r"_page_(\d+)\.md$", file_path)
+        if match:
+            return int(match.group(1))
+        return 0
+    
+    table_files.sort(key=get_page_num)
+    
+    # Split markdown content into sections by page
+    pages = []
+    current_page = []
+    content_lines = markdown_content.split("\n")
+    
+    for line in content_lines:
+        if re.match(r"^## Page \d+$", line):
+            if current_page:
+                pages.append(current_page)
+                current_page = []
+        current_page.append(line)
+    
+    if current_page:
+        pages.append(current_page)
+    
+    # Map table files to their respective pages
+    tables_by_page = {}
+    for table_file in table_files:
+        page_num = get_page_num(table_file)
+        if page_num > 0:  # Page numbers in filenames start from 1
+            if page_num not in tables_by_page:
+                tables_by_page[page_num] = []
             
-            # Read the table content
-            with open(table_file, 'r', encoding='utf-8') as t:
-                table_content = t.read()
+            # Read table content
+            with open(table_file, 'r', encoding='utf-8') as f:
+                table_content = f.read().strip()
             
-            # If table is empty, skip it
-            if not table_content.strip():
-                continue
-                
-            # Add table reference to content
-            content += f"\n\n# {table_name}\n\n{table_content}\n"
+            tables_by_page[page_num].append(table_content)
+    
+    # Integrate tables within their respective page sections
+    revised_content = []
+    for i, page_lines in enumerate(pages):
+        # Find the page number
+        page_num = 0
+        for line in page_lines:
+            match = re.match(r"^## Page (\d+)$", line)
+            if match:
+                page_num = int(match.group(1))
+                break
         
-        # Write the updated content back to the file
-        with open(output_file, 'w', encoding='utf-8') as f:
-            f.write(content)
-    finally:
-        if close_file and output:
-            output.close()
-    return output_file
+        # Add the page header and content
+        revised_content.extend(page_lines)
+        
+        # Add tables for this page if they exist
+        if page_num in tables_by_page:
+            revised_content.append("")  # Add blank line
+            revised_content.append("### Tables")
+            for table in tables_by_page[page_num]:
+                revised_content.append("")
+                revised_content.extend(table.split("\n"))
+                revised_content.append("")
+    
+    return "\n".join(revised_content)
+
+
+def convert_csv_to_markdown_table(csv_content):
+    """
+    Convert CSV content to a markdown table.
+    
+    Args:
+        csv_content (str): CSV content as string
+        
+    Returns:
+        str: Markdown table format
+    """
+    if not csv_content.strip():
+        return "*Empty table*"
+    
+    lines = csv_content.strip().split('\n')
+    if not lines:
+        return "*Empty table*"
+    
+    # Process the header row
+    headers = lines[0].split(',')
+    headers = [h.strip('"').strip() for h in headers]
+    
+    # Start building the markdown table
+    markdown_table = '| ' + ' | '.join(headers) + ' |\n'
+    markdown_table += '|' + '|'.join(['---' for _ in headers]) + '|\n'
+    
+    # Add data rows
+    for i in range(1, len(lines)):
+        # Handle potential quoted cells with commas inside them
+        row_data = []
+        current_cell = ""
+        in_quotes = False
+        
+        for char in lines[i]:
+            if char == '"':
+                in_quotes = not in_quotes
+            elif char == ',' and not in_quotes:
+                row_data.append(current_cell.strip('"').strip())
+                current_cell = ""
+            else:
+                current_cell += char
+        
+        # Don't forget the last cell
+        if current_cell:
+            row_data.append(current_cell.strip('"').strip())
+        
+        # Ensure we have data for all columns
+        while len(row_data) < len(headers):
+            row_data.append("")
+        
+        # Truncate if we have too many columns
+        if len(row_data) > len(headers):
+            row_data = row_data[:len(headers)]
+        
+        # Add the row to the markdown table
+        markdown_table += '| ' + ' | '.join(row_data) + ' |\n'
+    
+    return markdown_table
 
 
 def convert_to_enhanced_markdown(pdf_path, output_file=None):
     """
-    Convert a PDF to enhanced markdown format with page breaks, tables, and other features.
+    Convert a PDF to enhanced markdown format with page breaks, tables, and more.
     
     Args:
         pdf_path (str): Path to the PDF file
-        output_file (str): Path to output markdown file (optional)
-        
+        output_file (str): Optional path for output file. If not provided, it will
+                          be created in the configured ENHANCED_MARKDOWN_DIR
+                          
     Returns:
-        str: Path to the enhanced markdown file
+        dict: Results of the conversion including output path
     """
-    base_name = os.path.splitext(os.path.basename(pdf_path))[0]
-    pdf_dir = os.path.dirname(pdf_path)
+    pdf_filename = os.path.basename(pdf_path)
+    base_name = os.path.splitext(pdf_filename)[0]
     
-    if output_file is None:
-        output_file = os.path.join(ENHANCED_MARKDOWN_DIR, f"{base_name}_enhanced.md")
-        
-    # Ensure output directory exists
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+    # Set default output location if not provided
+    if not output_file:
+        output_dir = ENHANCED_MARKDOWN_DIR
+        ensure_directory(output_dir)
+        output_file = os.path.join(output_dir, f"{base_name}.md")
     
-    # Get all text files for this PDF
-    page_files = []
-    text_dir = TEXT_DIR
+    # Get text files from the extraction process
+    text_dir = os.path.join(TEXT_DIR, base_name)
+    if not os.path.exists(text_dir):
+        logger.error(f"Text directory not found: {text_dir}")
+        return {"success": False, "error": "Text extraction directory not found"}
     
-    for file in sorted(os.listdir(text_dir)):
-        if file.startswith(base_name) and file.endswith(".txt"):
-            page_files.append(os.path.join(text_dir, file))
+    # Get page files in correct order
+    page_files = get_sorted_page_files(text_dir)
+    if not page_files:
+        logger.error(f"No text files found in {text_dir}")
+        return {"success": False, "error": "No text files found"}
     
-    logger.info(f"Found {len(page_files)} page files to process")
-    print(f"Found {len(page_files)} page files to process")
+    # Create empty markdown content to start
+    markdown_content = ""
     
-    # Create markdown content
-    markdown_content = f"# {base_name.upper()}\n\n## Table of Contents\n\n* [Generated table of contents will be placed here]"
-    
-    # Process each page file
-    for page_file in page_files:
-        # Extract page number
-        match = re.search(r'page_(\d+)\.txt$', page_file)
-        if match:
-            page_num = match.group(1)
+    try:
+        # Process each page
+        for i, page_file in enumerate(page_files, start=1):
+            # Add page break for all pages except the first
+            if i > 1:
+                markdown_content += f"\n\n---\n\n"
             
             # Add page header
-            markdown_content += f"\n\n### Page {page_num}\n\n"
+            markdown_content += f"## Page {i}\n\n"
             
             # Read page content with error handling
             try:
@@ -287,8 +387,10 @@ def convert_to_enhanced_markdown(pdf_path, output_file=None):
                         with open(page_file, 'r', encoding='latin-1') as fallback:
                             content = fallback.read()
                 
+                # Apply binary content cleaning to remove control characters
+                content = binary_clean_content(content)
+                
                 # Apply aggressive cleaning to the content
-                from pdf_processor.utils.cleaning import aggressive_clean_text
                 content = aggressive_clean_text(content)
                 
                 # Add content to markdown if there's something to add
@@ -297,58 +399,54 @@ def convert_to_enhanced_markdown(pdf_path, output_file=None):
                 else:
                     markdown_content += "_No extractable text content on this page_"
             except Exception as e:
-                logger.error(f"Error processing page file {page_file}: {str(e)}")
-                markdown_content += f"\n\n_Error processing text content: {str(e)}_\n\n"
-    
-    # Create a debug backup of the markdown content
-    debug_path = os.path.join(os.path.dirname(output_file), f"{base_name}_debug.md")
-    try:
-        with open(debug_path, 'w', encoding='utf-8', errors='replace') as debug_file:
-            debug_file.write(markdown_content)
-        logger.info(f"Debug markdown saved to: {debug_path}")
-    except Exception as e:
-        logger.error(f"Error saving debug markdown: {str(e)}")
-    
-    # Write to output file
-    try:
-        with open(output_file, 'w', encoding='utf-8', errors='replace') as f:
+                logger.error(f"Error processing page {i}: {str(e)}")
+                markdown_content += f"_Error processing page {i}: {str(e)}_\n\n"
+        
+        # Add table references (if tables exist)
+        tables_dir = os.path.join(TABLES_DIR, base_name)
+        markdown_content = add_table_references(markdown_content, tables_dir, pdf_path)
+        
+        # Write the markdown content to file
+        with open(output_file, 'w', encoding='utf-8') as f:
             f.write(markdown_content)
         
-        logger.info(f"Enhanced markdown created at: {output_file}")
-        print(f"Enhanced markdown created at: {output_file}")
+        return {
+            "success": True, 
+            "output_file": output_file
+        }
         
-        # Add table references
-        add_table_references(base_name, output_file)
-        
-        return output_file
     except Exception as e:
-        logger.error(f"Error saving enhanced markdown file: {str(e)}")
-        return debug_path  # Return the debug file path as fallback
+        logger.error(f"Error creating enhanced markdown: {str(e)}")
+        return {"success": False, "error": str(e)}
 
 
 def main():
-    """Main function to handle command line arguments."""
+    """
+    Main entry point for running as standalone.
+    """
+    parser = argparse.ArgumentParser(description='Convert extracted PDF text to enhanced markdown')
+    parser.add_argument('--pdf', default=DEFAULT_PDF_PATH, help='Path to the PDF file')
+    parser.add_argument('--output', help='Path to output file (optional)')
+    args = parser.parse_args()
+
     # Configure logging
     configure_logging()
-    
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(description="Convert PDF text to enhanced markdown format")
-    parser.add_argument("--pdf-path", default=DEFAULT_PDF_PATH, help="Path to the PDF file")
-    parser.add_argument("--output-file", default=None, help="Path to the output markdown file")
-    parser.add_argument("--log-level", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], 
-                       default="INFO", help="Set the logging level (default: INFO)")
-    args = parser.parse_args()
-    
-    # Set log level if specified
-    if args.log_level:
-        logger.setLevel(args.log_level)
-        logger.info(f"Log level set to {args.log_level}")
-    
+
+    # Validate PDF path
+    if not os.path.exists(args.pdf):
+        logger.error(f"PDF file not found: {args.pdf}")
+        sys.exit(1)
+
     # Convert to enhanced markdown
-    output_file = convert_to_enhanced_markdown(args.pdf_path, args.output_file)
+    result = convert_to_enhanced_markdown(args.pdf, args.output)
     
-    print(f"Processing complete. Check '{output_file}' for the enhanced markdown content.")
-    return 0
+    if result["success"]:
+        output_file = result["output_file"]
+        logger.info(f"Enhanced markdown created successfully at: {output_file}")
+        print(f"Enhanced markdown created at: {output_file}")
+    else:
+        logger.error(f"Failed to create enhanced markdown: {result.get('error', 'Unknown error')}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

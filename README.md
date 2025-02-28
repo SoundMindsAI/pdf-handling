@@ -232,6 +232,13 @@ brew install ghostscript
 port install ghostscript
 ```
 
+> **⚠️ Important:** Ghostscript is **required** for table extraction. If you encounter a "Ghostscript is not installed" error even after installation, you may need to set the `GS_PATH` environment variable:
+> ```bash
+> # Set GS_PATH environment variable before running
+> export GS_PATH=/usr/local/bin/gs  # or path to your gs executable
+> python -m pdf_processor your_pdf_file.pdf
+> ```
+
 On Linux:
 ```bash
 # Debian/Ubuntu
